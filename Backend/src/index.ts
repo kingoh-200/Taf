@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import knex from 'knex';
+import knexConfig from './db/knexfile';
 
 import { eventRoutes } from './routes/events';
 import { memberRoutes } from './routes/members';
@@ -38,8 +40,28 @@ app.get('/api/health', (_req, res) => {
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+// Auto-run migrations and seeds on startup (for production)
+async function initializeDatabase() {
+  try {
+    const environment = process.env.NODE_ENV || 'development';
+    const db = knex(knexConfig[environment]);
+    console.log('🔄 Running database migrations...');
+    await db.migrate.latest();
+    console.log('✅ Migrations complete');
+    console.log('🌱 Running database seeds...');
+    await db.seed.run();
+    console.log('✅ Seeds complete');
+    await db.destroy();
+  } catch (error) {
+    console.error('⚠️ Migration/seed error:', error);
+  }
+}
+
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  if (process.env.NODE_ENV === 'production') {
+    await initializeDatabase();
+  }
 });
 
 export default app;
