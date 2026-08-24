@@ -47,10 +47,6 @@ const Navbar = () => {
 
   const links = publicLinks;
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : user?.username.charAt(0).toUpperCase() || '?';
-
   return (
     <nav style={styles.nav}>
       <div style={styles.inner}>
@@ -62,7 +58,7 @@ const Navbar = () => {
               to={link.to}
               style={{
                 ...styles.link,
-                color: location.pathname === link.to ? '#2563eb' : '#475569',
+                color: location.pathname === link.to ? '#00A0DC' : '#475569',
                 fontWeight: location.pathname === link.to ? 600 : 400,
               }}
             >
