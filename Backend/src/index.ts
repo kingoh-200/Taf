@@ -52,8 +52,8 @@ async function initializeDatabase() {
     await db.seed.run();
     console.log('✅ Seeds complete');
     await db.destroy();
-  } catch (error) {
-    console.error('⚠️ Migration/seed error:', error);
+  } catch (error: any) {
+    console.error('⚠️ Migration/seed error:', error.message || error);
   }
 }
 

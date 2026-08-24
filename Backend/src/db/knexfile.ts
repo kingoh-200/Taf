@@ -14,17 +14,20 @@ const connectionConfig = process.env.DATABASE_URL
       password: process.env.DB_PASSWORD || 'password',
     };
 
+const migrationsDir = path.resolve(__dirname, '../migrations');
+const seedsDir = path.resolve(__dirname, '../seeds');
+
 const config: { [key: string]: Knex.Config } = {
   development: {
     client: 'pg',
     connection: connectionConfig,
     pool: { min: 2, max: 10 },
     migrations: {
-      directory: '../migrations',
+      directory: migrationsDir,
       extension: 'ts',
     },
     seeds: {
-      directory: '../seeds',
+      directory: seedsDir,
       extension: 'ts',
     },
   },
@@ -34,7 +37,10 @@ const config: { [key: string]: Knex.Config } = {
     connection: connectionConfig,
     pool: { min: 2, max: 10 },
     migrations: {
-      directory: '../migrations',
+      directory: migrationsDir,
+    },
+    seeds: {
+      directory: seedsDir,
     },
   },
 };
