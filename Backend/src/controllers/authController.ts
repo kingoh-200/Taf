@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import db from '../db';
 
 export const register = async (req: Request, res: Response) => {
@@ -36,10 +36,11 @@ export const register = async (req: Request, res: Response) => {
       })
       .returning(['id', 'username', 'name', 'email', 'role']);
 
+    const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn } as SignOptions
     );
 
     res.status(201).json({ user, token });
@@ -91,10 +92,11 @@ export const login = async (req: Request, res: Response) => {
       user.role = 'admin';
     }
 
+    const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn } as SignOptions
     );
 
     res.json({ user: sanitizeUser(user, user.role), token });
