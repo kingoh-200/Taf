@@ -1,8 +1,8 @@
 /**
  * Cloudinary upload utility.
  *
- * Uploads an image directly from the browser to Cloudinary using an
- * UNSIGNED upload preset, then returns the hosted URL.
+ * Uploads images OR videos directly from the browser to Cloudinary
+ * using an UNSIGNED upload preset, then returns the hosted URL.
  *
  * Setup (one-time):
  * 1. Create a free account at https://cloudinary.com
@@ -22,21 +22,32 @@ const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | 
 export const isCloudinaryConfigured = Boolean(CLOUD_NAME && UPLOAD_PRESET);
 
 /**
+ * Detect if a file is a video based on MIME type.
+ */
+export function isVideoFile(file: File): boolean {
+  return file.type.startsWith('video/');
+}
+
+/**
  * Upload a file to Cloudinary. Returns the secure hosted URL.
- * The image is auto-cropped to a square (400x400) by Cloudinary
- * transformations applied to the returned URL.
+ * - Images: auto-cropped to square (400x400) for avatars
+ * - Videos: uploaded directly with no transformations
  */
 export async function uploadToCloudinary(file: File, folder = 'profiles'): Promise<string> {
   if (!isCloudinaryConfigured) {
     throw new Error('Cloudinary is not configured');
   }
 
+  const video = isVideoFile(file);
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET!);
   formData.append('folder', folder);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+  // Use the correct endpoint: image/upload or video/upload
+  const endpoint = video ? 'video' : 'image';
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}/upload`, {
     method: 'POST',
     body: formData,
   });
@@ -52,10 +63,12 @@ export async function uploadToCloudinary(file: File, folder = 'profiles'): Promi
     version: number;
   };
 
-  // Build a URL that center-crops to a square 400x400 (great for avatars).
-  // The raw secure_url is also available for full-size display.
-  const { public_id, version } = data;
-  const squareUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_crop,g_face,h_800,w_800,c_fill,q_auto:good,f_auto,w_400,h_400/v${version}/${public_id}.jpg`;
+  if (video) {
+    // For videos, return the raw URL — no transformations
+    return data.secure_url;
+  }
 
-  return squareUrl;
+  // For images, apply center-crop square transformation for avatars
+  const { public_id, version } = data;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_crop,g_face,h_800,w_800,c_fill,q_auto:good,f_auto,w_400,h_400/v${version}/${public_id}.jpg`;
 }

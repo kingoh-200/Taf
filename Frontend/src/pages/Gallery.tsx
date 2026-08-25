@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
-import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
+import { uploadToCloudinary, isCloudinaryConfigured, isVideoFile } from '../utils/cloudinary';
 import { processImage } from '../utils/imageProcessor';
 
 interface GalleryItem {
@@ -77,13 +77,24 @@ const Gallery = () => {
 
     try {
       let url: string;
-      if (isCloudinaryConfigured) {
+      const video = isVideoFile(selectedFile);
+
+      if (video) {
+        // Videos must go through Cloudinary (too large for base64)
+        if (!isCloudinaryConfigured) {
+          setError('Video uploads require Cloudinary. Please configure it in your .env file.');
+          setUploading(false);
+          return;
+        }
+        url = await uploadToCloudinary(selectedFile, 'gallery');
+      } else if (isCloudinaryConfigured) {
         url = await uploadToCloudinary(selectedFile, 'gallery');
       } else {
+        // Fallback: compress image locally as base64
         url = await processImage(selectedFile, 1200, 0.85);
       }
 
-      const isVideo = selectedFile.type.startsWith('video/');
+      const isVideo = video;
 
       const res = await api.post('/gallery', {
         url,
