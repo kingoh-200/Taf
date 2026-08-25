@@ -90,7 +90,7 @@ const EventsManager = () => {
         <div key={event.id} className="card" style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h4>{event.title}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
               {new Date(event.event_date).toLocaleString()} • {event.location || 'No location'}
             </p>
           </div>
@@ -140,7 +140,7 @@ const AnnouncementsManager = () => {
         <div key={item.id} className="card" style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h4>{item.is_pinned ? <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: '#2563eb' }}></i> : ''}{item.title}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.content.slice(0, 100)}...</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{item.content.slice(0, 100)}...</p>
           </div>
           <button onClick={() => handleDelete(item.id)} style={deleteBtnStyle}><i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Delete</button>
         </div>
@@ -191,7 +191,7 @@ const MembersManager = () => {
         <div key={member.id} className="card" style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h4>{member.name}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{member.role || 'Member'}</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{member.role || 'Member'}</p>
           </div>
           <button onClick={() => handleDelete(member.id)} style={deleteBtnStyle}><i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Delete</button>
         </div>

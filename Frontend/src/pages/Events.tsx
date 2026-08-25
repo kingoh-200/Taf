@@ -26,8 +26,8 @@ const Events = () => {
           {events.map((event) => (
             <div key={event.id} className="card">
               <h3>{event.title}</h3>
-              <p style={{ fontSize: '0.9rem', color: '#2563eb', marginBottom: '0.5rem' }}>
-                <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem', color: '#00A0DC' }}></i>{new Date(event.event_date).toLocaleDateString('en-US', {
+              <p style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem', color: 'var(--primary)' }}></i>{new Date(event.event_date).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',

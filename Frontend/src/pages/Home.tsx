@@ -136,7 +136,7 @@ const Home = () => {
         <section style={{ marginTop: '2rem' }}>
           <div style={heroStyles.sectionHeader}>
             <h2 style={{ margin: 0 }}>
-              <i className="fa-solid fa-bullhorn" style={{ marginRight: '0.5rem', color: '#F7941D' }}></i>
+              <i className="fa-solid fa-bullhorn" style={{ marginRight: '0.5rem', color: 'var(--accent)' }}></i>
               Announcements
             </h2>
             {user && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
@@ -144,10 +144,10 @@ const Home = () => {
           {announcements.map((a) => (
             <div key={a.id} className="card" style={{ marginTop: '0.8rem' }}>
               <h3 style={{ margin: '0 0 0.3rem' }}>
-                {a.is_pinned ? <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: '#F7941D', fontSize: '0.9rem' }}></i> : ''}
+                {a.is_pinned ?            <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: 'var(--accent)', fontSize: '0.9rem' }}></i> : ''}
                 {a.title}
               </h3>
-              <p style={{ margin: 0, color: '#475569', fontSize: '0.9rem' }}>{a.content}</p>
+              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem' }}>{a.content}</p>
             </div>
           ))}
         </section>
@@ -158,7 +158,7 @@ const Home = () => {
         <section style={{ marginTop: '2rem' }}>
           <div style={heroStyles.sectionHeader}>
             <h2 style={{ margin: 0 }}>
-              <i className="fa-solid fa-calendar-days" style={{ marginRight: '0.5rem', color: '#00A0DC' }}></i>
+              <i className="fa-solid fa-calendar-days" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
               Upcoming Events
             </h2>
             {user && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
@@ -167,19 +167,19 @@ const Home = () => {
             {events.map((event) => (
               <div key={event.id} className="card" style={{ padding: '1.2rem' }}>
                 <h3 style={{ margin: '0 0 0.4rem' }}>{event.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: '#00A0DC', margin: '0 0 0.3rem', fontWeight: 500 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--primary)', margin: '0 0 0.3rem', fontWeight: 500 }}>
                   <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem' }}></i>
                   {new Date(event.event_date).toLocaleDateString('en-US', {
                     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
                   })}
                 </p>
                 {event.location && (
-                  <p style={{ fontSize: '0.85rem', margin: '0 0 0.3rem', color: '#64748b' }}>
+                  <p style={{ fontSize: '0.85rem', margin: '0 0 0.3rem', color: 'var(--text-light)' }}>
                     <i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>{event.location}
                   </p>
                 )}
                 {event.description && (
-                  <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: '#475569' }}>{event.description}</p>
+                  <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>{event.description}</p>
                 )}
               </div>
             ))}
@@ -189,7 +189,7 @@ const Home = () => {
 
       {/* Loading state */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
           <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>
           Loading club data...
         </div>
@@ -198,8 +198,8 @@ const Home = () => {
       {/* Not logged in CTA */}
       {!user && !loading && events.length === 0 && announcements.length === 0 && (
         <section style={{ textAlign: 'center', padding: '3rem 2rem', marginTop: '2rem' }}>
-          <p style={{ color: '#64748b', fontSize: '1.1rem' }}>
-            <i className="fa-solid fa-rocket" style={{ marginRight: '0.5rem', color: '#00A0DC' }}></i>
+          <p style={{ color: 'var(--text-light)', fontSize: '1.1rem' }}>
+            <i className="fa-solid fa-rocket" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
             We're just getting started — join us and be part of the journey!
           </p>
         </section>
@@ -212,10 +212,11 @@ const heroStyles: Record<string, React.CSSProperties> = {
   hero: {
     textAlign: 'center',
     padding: '3rem 2rem',
-    background: 'linear-gradient(135deg, #e0f4fc 0%, #fef3e2 100%)',
+    background: 'var(--bg-alt)',
     borderRadius: 12,
     marginTop: '1.5rem',
-    border: '1px solid #d4eef7',
+    border: '1px solid var(--border)',
+    transition: 'background 0.3s, border-color 0.3s',
   },
   title: {
     fontSize: '2.5rem',
@@ -223,7 +224,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
   },
   subtitle: {
     fontSize: '1.15rem',
-    color: '#64748b',
+    color: 'var(--text-light)',
     marginBottom: '1.5rem',
     maxWidth: 500,
     margin: '0 auto 1.5rem',
@@ -242,13 +243,14 @@ const heroStyles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    background: '#fff',
+    background: 'var(--bg-elevated)',
     borderRadius: 16,
     padding: '1rem 1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-    border: '1px solid #e2e8f0',
+    boxShadow: 'var(--shadow)',
+    border: '1px solid var(--border)',
     maxWidth: 400,
     width: '100%',
+    transition: 'background 0.3s, border-color 0.3s',
   },
   profileImg: {
     width: 56,
@@ -270,7 +272,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
   greeting: {
     fontSize: '1.15rem',
     margin: 0,
-    color: '#1e293b',
+    color: 'var(--text)',
     textAlign: 'left' as const,
   },
   roleRow: {
@@ -296,11 +298,11 @@ const heroStyles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.3rem',
     padding: '0.8rem 1.2rem',
-    background: '#fff',
+    background: 'var(--bg-elevated)',
     borderRadius: 12,
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
     textDecoration: 'none',
-    color: '#475569',
+    color: 'var(--text-light)',
     fontSize: '0.8rem',
     fontWeight: 500,
     transition: 'all 0.2s',
@@ -317,9 +319,10 @@ const heroStyles: Record<string, React.CSSProperties> = {
     gap: '2rem',
     marginTop: '1.5rem',
     padding: '1rem',
-    background: '#fff',
+    background: 'var(--bg-elevated)',
     borderRadius: 12,
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
+    transition: 'background 0.3s, border-color 0.3s',
   },
   stat: {
     display: 'flex',
@@ -330,11 +333,11 @@ const heroStyles: Record<string, React.CSSProperties> = {
   statNumber: {
     fontSize: '1.5rem',
     fontWeight: 700,
-    color: '#1e293b',
+    color: 'var(--text)',
   },
   statLabel: {
     fontSize: '0.8rem',
-    color: '#64748b',
+    color: 'var(--text-light)',
   },
   /* Section headers */
   sectionHeader: {
@@ -344,7 +347,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
   },
   seeAll: {
     fontSize: '0.85rem',
-    color: '#00A0DC',
+    color: 'var(--primary)',
     textDecoration: 'none',
     fontWeight: 500,
   },

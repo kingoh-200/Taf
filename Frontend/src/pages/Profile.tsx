@@ -232,7 +232,7 @@ const Profile = () => {
             {/* Skills */}
             {userSkills.length > 0 && (
               <div style={{ textAlign: 'left', marginTop: '1rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: 600 }}>
                   <i className="fa-solid fa-tags" style={{ marginRight: '0.3rem' }}></i>Skills
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
@@ -281,7 +281,7 @@ const Profile = () => {
               <div className="form-group">
                 <label><i className="fa-solid fa-image" style={{ marginRight: '0.3rem' }}></i>Profile Picture URL</label>
                 <input type="url" value={form.profile_image} onChange={(e) => setForm({ ...form, profile_image: e.target.value })} placeholder="https://example.com/photo.jpg" />
-                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.3rem' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
                   Or click the camera icon on your avatar to upload a file
                 </p>
               </div>
@@ -306,7 +306,7 @@ const Profile = () => {
               <div className="form-group">
                 <label><i className="fa-solid fa-tags" style={{ marginRight: '0.3rem' }}></i>Skills</label>
                 <input type="text" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} placeholder="e.g. Technology, Web Development, Design" />
-                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.3rem' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
                   Separate skills with commas
                 </p>
               </div>
@@ -419,7 +419,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   details: {
     textAlign: 'left',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border)',
     paddingTop: '1.2rem',
     marginTop: '0.5rem',
   },
@@ -428,24 +428,25 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '0.6rem 0',
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--border-light)',
   },
   detailLabel: {
-    color: '#64748b',
+    color: 'var(--text-light)',
     fontSize: '0.9rem',
   },
   detailValue: {
     fontWeight: 500,
     fontSize: '0.9rem',
+    color: 'var(--text)',
   },
   adminBanner: {
     marginTop: '1.5rem',
     padding: '0.8rem 1rem',
-    background: '#e0f4fc',
+    background: 'var(--bg-alt)',
     borderRadius: 8,
     fontSize: '0.9rem',
-    color: '#0077A8',
-    border: '1px solid #b3e0f2',
+    color: 'var(--primary)',
+    border: '1px solid var(--border)',
   },
   skillTag: {
     display: 'inline-block',
@@ -453,9 +454,9 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 12,
     fontSize: '0.75rem',
     fontWeight: 500,
-    background: '#e0f4fc',
-    color: '#0077A8',
-    border: '1px solid #b3e0f2',
+    background: 'var(--bg-alt)',
+    color: 'var(--primary)',
+    border: '1px solid var(--border)',
   },
 };
 

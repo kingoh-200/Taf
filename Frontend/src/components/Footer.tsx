@@ -14,12 +14,13 @@ const Footer = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   footer: {
-    borderTop: '3px solid #00A0DC',
+    borderTop: '3px solid var(--primary)',
     padding: '2rem 0',
     marginTop: '4rem',
     textAlign: 'center',
-    color: '#64748b',
-    background: '#f0f9fc',
+    color: 'var(--text-light)',
+    background: 'var(--bg-alt)',
+    transition: 'background 0.3s, color 0.3s',
   },
   inner: {
     width: '100%',

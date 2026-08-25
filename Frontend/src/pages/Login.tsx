@@ -65,7 +65,7 @@ const Login = () => {
         </button>
       </form>
 
-      <p style={{ marginTop: '1rem', textAlign: 'center', color: '#64748b' }}>
+      <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--text-light)' }}>
         Don't have an account? <Link to="/register">Sign up</Link>
       </p>
     </div>

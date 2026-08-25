@@ -7,7 +7,32 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Apply theme on mount and when changed
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Also sync on mount (for SSR or fresh load)
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.setAttribute('data-theme', saved);
+    } else {
+      // Check system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        setTheme('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -38,6 +63,10 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   const publicLinks = [
     { to: '/', label: 'Home', icon: 'fa-house' },
     { to: '/events', label: 'Events', icon: 'fa-calendar-days' },
@@ -48,7 +77,7 @@ const Navbar = () => {
   const links = publicLinks;
 
   return (
-    <nav style={styles.nav}>
+    <nav className="navbar" style={styles.nav}>
       <div style={styles.inner}>
         <Link to="/" style={styles.logo}><img src="/logo.png" alt="Teens Aloud Foundation" style={styles.logoImg} /></Link>
         <div style={styles.links}>
@@ -56,9 +85,10 @@ const Navbar = () => {
             <Link
               key={link.to}
               to={link.to}
+              className="nav-link"
               style={{
                 ...styles.link,
-                color: location.pathname === link.to ? '#00A0DC' : '#475569',
+                color: location.pathname === link.to ? 'var(--primary)' : 'var(--text-light)',
                 fontWeight: location.pathname === link.to ? 600 : 400,
               }}
             >
@@ -66,6 +96,11 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+
+          {/* Theme Toggle */}
+          <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+            <i className={`fa-solid ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
+          </button>
 
           {user ? (
             <div style={styles.userMenu} ref={dropdownRef}>
@@ -77,10 +112,10 @@ const Navbar = () => {
                 {user.profile_image ? (
                   <img src={user.profile_image} alt="Profile" style={styles.avatarImg} />
                 ) : (
-                  <i className="fa-solid fa-user" style={{ fontSize: '1rem' }}></i>
+                  <i className="fa-solid fa-user" style={{ fontSize: '1rem', color: 'var(--text)' }}></i>
                 )}
                 <span style={styles.userName}>{user.name || user.username}</span>
-                <i className={`fa-solid fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '0.7rem', marginLeft: '0.3rem' }}></i>
+                <i className={`fa-solid fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '0.7rem', marginLeft: '0.3rem', color: 'var(--text-light)' }}></i>
               </button>
 
               {/* Dropdown menu */}
@@ -134,11 +169,12 @@ const Navbar = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   nav: {
-    background: '#fff',
-    borderBottom: '2px solid #00A0DC',
+    background: 'var(--bg-elevated)',
+    borderBottom: '2px solid var(--primary)',
     position: 'sticky',
     top: 0,
     zIndex: 100,
+    transition: 'background 0.3s',
   },
   inner: {
     width: '100%',
@@ -169,7 +205,7 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'color 0.2s',
   },
   loginBtn: {
-    background: '#00A0DC',
+    background: 'var(--primary)',
     color: '#fff',
     padding: '0.5rem 1rem',
     borderRadius: 8,
@@ -183,14 +219,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    background: '#e0f4fc',
-    border: '1px solid #b3e0f2',
+    background: 'var(--bg-alt)',
+    border: '1px solid var(--border)',
     borderRadius: 24,
     padding: '0.35rem 0.8rem 0.35rem 0.35rem',
     cursor: 'pointer',
     fontSize: '0.9rem',
-    color: '#1e293b',
-    transition: 'background 0.2s',
+    color: 'var(--text)',
+    transition: 'background 0.2s, border-color 0.2s',
   },
   avatarImg: {
     width: 30,
@@ -201,16 +237,17 @@ const styles: Record<string, React.CSSProperties> = {
   userName: {
     fontWeight: 500,
     fontSize: '0.9rem',
+    color: 'var(--text)',
   },
   dropdown: {
     position: 'absolute',
     top: 'calc(100% + 8px)',
     right: 0,
     width: 220,
-    background: '#fff',
+    background: 'var(--bg-elevated)',
     borderRadius: 12,
-    boxShadow: '0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-    border: '1px solid #e2e8f0',
+    boxShadow: 'var(--shadow-lg)',
+    border: '1px solid var(--border)',
     overflow: 'hidden',
     zIndex: 200,
   },
@@ -219,7 +256,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.7rem',
     padding: '0.8rem 1rem',
-    background: '#f8fafc',
+    background: 'var(--bg-alt)',
   },
   dropdownAvatar: {
     width: 36,
@@ -240,16 +277,16 @@ const styles: Record<string, React.CSSProperties> = {
   dropdownName: {
     fontWeight: 600,
     fontSize: '0.9rem',
-    color: '#1e293b',
+    color: 'var(--text)',
   },
   dropdownRole: {
     fontSize: '0.75rem',
-    color: '#64748b',
+    color: 'var(--text-light)',
     marginTop: '0.1rem',
   },
   dropdownDivider: {
     height: 1,
-    background: '#e2e8f0',
+    background: 'var(--border)',
     margin: '0.3rem 0',
   },
   dropdownItem: {
@@ -258,7 +295,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.6rem',
     padding: '0.6rem 1rem',
     fontSize: '0.9rem',
-    color: '#475569',
+    color: 'var(--text-light)',
     textDecoration: 'none',
     transition: 'background 0.15s',
     width: '100%',
@@ -268,7 +305,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'left' as const,
   },
   dropdownLogout: {
-    color: '#dc2626',
+    color: 'var(--error)',
   },
 };
 

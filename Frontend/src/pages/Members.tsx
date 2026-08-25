@@ -169,10 +169,10 @@ const MemberCard = ({ member, onView }: { member: MemberData; onView: (m: Member
             ...styles.statusDot,
             background: member.is_active !== false ? '#16a34a' : '#94a3b8',
           }}></span>
-          <span style={{ fontSize: '0.8rem', color: member.is_active !== false ? '#16a34a' : '#94a3b8' }}>
+          <span style={{ fontSize: '0.8rem', color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>
             {member.is_active !== false ? 'Active' : 'Inactive'}
           </span>
-          <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: 'auto' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
             <i className="fa-solid fa-calendar" style={{ marginRight: '0.3rem' }}></i>
             Joined {new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
@@ -261,14 +261,14 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
         {member.social_link && (
           <div style={styles.detailLine}>
             <i className="fa-solid fa-link" style={styles.detailIcon}></i>
-            <a href={member.social_link} target="_blank" rel="noopener noreferrer" style={{ color: '#00A0DC' }}>{member.social_link}</a>
+            <a href={member.social_link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>{member.social_link}</a>
           </div>
         )}
       </div>
 
       {/* Bio */}
       {member.bio && (
-        <p style={{ fontSize: '0.95rem', color: '#475569', marginTop: '1rem', lineHeight: 1.6, textAlign: 'left' }}>
+        <p style={{ fontSize: '0.95rem', color: 'var(--text-light)', marginTop: '1rem', lineHeight: 1.6, textAlign: 'left' }}>
           {member.bio}
         </p>
       )}
@@ -283,12 +283,12 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
       )}
 
       {/* Status + Date */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-          <span style={{ ...styles.statusDot, background: member.is_active !== false ? '#16a34a' : '#94a3b8' }}></span>
-          <span style={{ color: member.is_active !== false ? '#16a34a' : '#94a3b8' }}>{member.is_active !== false ? 'Active' : 'Inactive'}</span>
+          <span style={{ ...styles.statusDot, background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
+          <span style={{ color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>{member.is_active !== false ? 'Active' : 'Inactive'}</span>
         </span>
-        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           <i className="fa-solid fa-calendar" style={{ marginRight: '0.3rem' }}></i>
           Joined {new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
         </span>
@@ -302,7 +302,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '1.2rem',
     marginBottom: '1rem',
     paddingBottom: '0.5rem',
-    borderBottom: '2px solid #00A0DC',
+    borderBottom: '2px solid var(--primary)',
   },
   card: {
     padding: '1.5rem',
@@ -347,25 +347,25 @@ const styles: Record<string, React.CSSProperties> = {
   detailsSection: {
     marginTop: '0.8rem',
     paddingTop: '0.6rem',
-    borderTop: '1px solid #f1f5f9',
+    borderTop: '1px solid var(--border-light)',
   },
   detailLine: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: '0.85rem',
-    color: '#475569',
+    color: 'var(--text-light)',
     marginBottom: '0.35rem',
   },
   detailIcon: {
     fontSize: '0.8rem',
-    color: '#00A0DC',
+    color: 'var(--primary)',
     width: 16,
     textAlign: 'center',
   },
   bio: {
     fontSize: '0.85rem',
-    color: '#64748b',
+    color: 'var(--text-light)',
     marginTop: '0.6rem',
     lineHeight: 1.5,
   },
@@ -381,14 +381,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 12,
     fontSize: '0.75rem',
     fontWeight: 500,
-    background: '#e0f4fc',
-    color: '#0077A8',
-    border: '1px solid #b3e0f2',
+    background: 'var(--bg-alt)',
+    color: 'var(--primary)',
+    border: '1px solid var(--border)',
   },
   footer: {
     marginTop: '0.6rem',
     paddingTop: '0.6rem',
-    borderTop: '1px solid #f1f5f9',
+    borderTop: '1px solid var(--border-light)',
   },
   statusRow: {
     display: 'flex',
@@ -407,7 +407,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.6rem',
     marginTop: '0.8rem',
     paddingTop: '0.6rem',
-    borderTop: '1px solid #f1f5f9',
+    borderTop: '1px solid var(--border-light)',
   },
   actionIcon: {
     width: 32,
@@ -416,8 +416,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#f1f5f9',
-    color: '#64748b',
+    background: 'var(--bg-alt)',
+    color: 'var(--text-light)',
     textDecoration: 'none',
     fontSize: '0.85rem',
     transition: 'background 0.2s',
@@ -426,9 +426,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginLeft: 'auto',
     padding: '0.4rem 1rem',
     borderRadius: 20,
-    border: '1px solid #00A0DC',
+    border: '1px solid var(--primary)',
     background: 'transparent',
-    color: '#00A0DC',
+    color: 'var(--primary)',
     fontSize: '0.8rem',
     fontWeight: 600,
     cursor: 'pointer',
@@ -447,7 +447,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '1rem',
   },
   modal: {
-    background: '#fff',
+    background: 'var(--bg-elevated)',
     borderRadius: 16,
     padding: '2rem',
     maxWidth: 480,
@@ -464,8 +464,8 @@ const styles: Record<string, React.CSSProperties> = {
     height: 32,
     borderRadius: '50%',
     border: 'none',
-    background: '#f1f5f9',
-    color: '#64748b',
+    background: 'var(--bg-alt)',
+    color: 'var(--text-light)',
     fontSize: '1rem',
     cursor: 'pointer',
     display: 'flex',
