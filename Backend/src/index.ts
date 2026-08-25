@@ -103,6 +103,28 @@ async function initializeDatabase() {
     `);
     console.log('✅ Tables created/verified');
 
+    // Add new columns if they don't exist (safe to run multiple times)
+    const addColumnIfNotExists = async (table: string, column: string, type: string) => {
+      try {
+        await db.raw(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${type}`);
+      } catch {
+        // Column may already exist or dialect doesn't support IF NOT EXISTS
+      }
+    };
+    await addColumnIfNotExists('users', 'title', 'VARCHAR(255)');
+    await addColumnIfNotExists('users', 'department', 'VARCHAR(255)');
+    await addColumnIfNotExists('users', 'location', 'VARCHAR(255)');
+    await addColumnIfNotExists('users', 'skills', 'TEXT');
+    await addColumnIfNotExists('users', 'social_link', 'VARCHAR(500)');
+    await addColumnIfNotExists('users', 'is_active', 'BOOLEAN DEFAULT TRUE');
+    await addColumnIfNotExists('members', 'title', 'VARCHAR(255)');
+    await addColumnIfNotExists('members', 'department', 'VARCHAR(255)');
+    await addColumnIfNotExists('members', 'location', 'VARCHAR(255)');
+    await addColumnIfNotExists('members', 'skills', 'TEXT');
+    await addColumnIfNotExists('members', 'social_link', 'VARCHAR(500)');
+    await addColumnIfNotExists('members', 'is_active', 'BOOLEAN DEFAULT TRUE');
+    console.log('✅ Columns verified');
+
     // Seed admin user if not exists
     const bcrypt = require('bcrypt');
     const adminExists = await db('users').where({ username: 'ADMIN' }).first();
