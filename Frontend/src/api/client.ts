@@ -8,6 +8,7 @@ const baseURL = import.meta.env.VITE_API_URL
 const api = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000, // 15s timeout — Render free tier can take 30s+ on cold start
 });
 
 // Attach JWT token to requests if available
@@ -19,7 +20,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 errors globally
+// Handle 401 errors globally (auto-logout on expired token)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -31,5 +32,26 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Retry wrapper for API calls — helpful when Render is waking up from sleep.
+ * Usage: const data = await retry(() => api.get('/events'), 3);
+ */
+export async function retry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 2,
+  delayMs = 2000,
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      // Wait longer on each retry (backoff)
+      await new Promise((r) => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+  throw new Error('Unreachable');
+}
 
 export default api;
