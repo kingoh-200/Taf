@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api, { retry } from '../api/client';
+import { cachedGet } from '../api/client';
 import type { Event, Announcement } from '../api/types';
 
 const Home = () => {
@@ -14,15 +14,15 @@ const Home = () => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
 
-    // Load data with retry for Render cold starts
+    // Load data with cache + retry for Render cold starts
     Promise.allSettled([
-      retry(() => api.get('/events')),
-      retry(() => api.get('/announcements')),
-      retry(() => api.get('/members')),
+      cachedGet('/events'),
+      cachedGet('/announcements'),
+      cachedGet('/members'),
     ]).then(([eventsRes, annRes, membersRes]) => {
-      if (eventsRes.status === 'fulfilled') setEvents(eventsRes.value.data.slice(0, 3));
-      if (annRes.status === 'fulfilled') setAnnouncements(annRes.value.data.slice(0, 3));
-      if (membersRes.status === 'fulfilled') setMemberCount(membersRes.value.data.length);
+      if (eventsRes.status === 'fulfilled') setEvents((eventsRes.value as any).data.slice(0, 3));
+      if (annRes.status === 'fulfilled') setAnnouncements((annRes.value as any).data.slice(0, 3));
+      if (membersRes.status === 'fulfilled') setMemberCount((membersRes.value as any).data.length);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

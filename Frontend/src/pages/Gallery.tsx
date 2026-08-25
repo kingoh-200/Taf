@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import api from '../api/client';
+import api, { cachedGet } from '../api/client';
 import { uploadToCloudinary, isCloudinaryConfigured, isVideoFile } from '../utils/cloudinary';
 import { processImage } from '../utils/imageProcessor';
+import { GalleryItemSkeleton } from '../components/Skeleton';
 
 interface GalleryItem {
   id: number;
@@ -42,10 +43,10 @@ const Gallery = () => {
 
   const loadItems = () => {
     setLoading(true);
-    api.get('/gallery')
-      .then((res) => setItems(res.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    cachedGet('/gallery').then(({ data, fromCache }) => {
+      setItems(data);
+      if (!fromCache) setLoading(false);
+    }).catch(() => {}).finally(() => setLoading(false));
   };
 
   const loadSaved = () => {
@@ -230,8 +231,8 @@ const Gallery = () => {
 
       {/* Gallery Grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>Loading gallery...
+        <div style={styles.grid}>
+          <GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton />
         </div>
       ) : displayItems.length === 0 ? (
         <div style={styles.empty}>

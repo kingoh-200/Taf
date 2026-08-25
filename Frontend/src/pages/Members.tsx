@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import api from '../api/client';
+import { cachedGet } from '../api/client';
+import { MemberCardSkeleton } from '../components/Skeleton';
 
 interface MemberData {
   id: string | number;
@@ -18,18 +19,34 @@ interface MemberData {
   source: 'user' | 'manual';
 }
 
+const MembersSkeleton = () => (
+  <div className="page">
+    <h1><i className="fa-solid fa-users" style={{ marginRight: '0.5rem' }}></i>Our Team</h1>
+    <p>Meet the people who make this club awesome.</p>
+    <h2 style={styles.sectionTitle}><i className="fa-solid fa-star" style={{ marginRight: '0.4rem', color: '#F7941D' }}></i>Admins</h2>
+    <div className="grid-2">
+      <MemberCardSkeleton /><MemberCardSkeleton />
+    </div>
+    <h2 style={{ ...styles.sectionTitle, marginTop: '2rem' }}><i className="fa-solid fa-users" style={{ marginRight: '0.4rem', color: '#00A0DC' }}></i>Members</h2>
+    <div className="grid-2">
+      <MemberCardSkeleton /><MemberCardSkeleton /><MemberCardSkeleton /><MemberCardSkeleton />
+    </div>
+  </div>
+);
+
 const Members = () => {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
 
   useEffect(() => {
-    api.get('/members')
-      .then((res) => setMembers(res.data))
-      .finally(() => setLoading(false));
+    cachedGet('/members').then(({ data, fromCache }) => {
+      setMembers(data);
+      if (!fromCache) setLoading(false);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading"><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>Loading members...</div>;
+  if (loading) return <MembersSkeleton />;
 
   const admins = members.filter((m) => m.role === 'admin');
   const regularMembers = members.filter((m) => m.role !== 'admin');

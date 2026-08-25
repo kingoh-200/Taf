@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
-import api from '../api/client';
+import { cachedGet } from '../api/client';
 import type { Event } from '../api/types';
+import { EventCardSkeleton } from '../components/Skeleton';
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/events')
-      .then((res) => setEvents(res.data))
-      .finally(() => setLoading(false));
+    cachedGet('/events').then(({ data, fromCache }) => {
+      setEvents(data);
+      if (!fromCache) setLoading(false);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading"><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>Loading events...</div>;
+  if (loading) return (
+    <div className="page">
+      <h1><i className="fa-solid fa-calendar-days" style={{ marginRight: '0.5rem' }}></i>Events</h1>
+      <p>Check out what we've been up to and what's coming next.</p>
+      <div className="grid-2">
+        <EventCardSkeleton /><EventCardSkeleton /><EventCardSkeleton /><EventCardSkeleton />
+      </div>
+    </div>
+  );
 
   return (
     <div className="page">
