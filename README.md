@@ -1,79 +1,58 @@
-# 🏛️ School Club Website
+# 🏛️ Teens Aloud Foundation Website
 
-A full-stack website for managing a school club, built with **React**, **Node.js/Express**, and **PostgreSQL**.
+A full-stack website for managing the Teens Aloud Foundation Kenya club, built with **React**, **Node.js/Express**, and **PostgreSQL**.
 
 ## Features
 
 - **Home page** with announcements and upcoming events
 - **Events** – view and manage club events
-- **Members** – showcase the team
-- **Gallery** – photo gallery (coming soon)
+- **Members** – showcase the team with rich profile cards
+- **Gallery** – photo and video sharing with likes and saves
 - **Admin dashboard** – manage content with authentication
+- **Dark mode** – toggle between light and dark themes
+- **Mobile responsive** – works on all screen sizes
+- **Image hosting** – Cloudinary integration for profile pictures and gallery
 
 ## Tech Stack
 
-| Layer      | Technology                  |
-| ---------- | --------------------------- |
-| Frontend   | React 18, TypeScript, Vite  |
-| Backend    | Node.js, Express, Knex.js   |
-| Database   | PostgreSQL                  |
-| Auth       | JWT + bcrypt                |
+| Layer      | Technology                          |
+| ---------- | ----------------------------------- |
+| Frontend   | React 18, TypeScript, Vite          |
+| Backend    | Node.js, Express, Knex.js           |
+| Database   | PostgreSQL (Supabase)               |
+| Auth       | JWT + bcrypt                        |
+| Storage    | Cloudinary                          |
+| Hosting    | Vercel (frontend) + Render (backend) |
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js (v18+)
-- PostgreSQL (local or cloud like Supabase/Neon)
 
-### 1. Create the Database
-
-```bash
-# Connect to PostgreSQL and create the database
-psql -U postgres -c "CREATE DATABASE club_website;"
-```
-
-### 2. Set Up the Backend
+### 1. Set Up the Backend
 
 ```bash
 cd Backend
-
-# Install dependencies
 npm install
-
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Run migrations (creates tables)
-npm run migrate
-
-# Seed sample data (optional)
-npm run seed
-
-# Start the development server
 npm run dev
 ```
 
 The backend will run on `http://localhost:3001`.
 
-### 3. Set Up the Frontend
+### 2. Set Up the Frontend
 
 ```bash
 cd Frontend
-
-# Install dependencies
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-The frontend will run on `http://localhost:5173` and proxy API requests to the backend.
+The frontend will run on `http://localhost:5173`.
 
-### 4. Login
+### 3. Login
 
-- **Admin login:** `admin` / `admin123`
+- **Admin login:** `ADMIN` / `123456`
 
 ## Project Structure
 
@@ -91,9 +70,9 @@ The frontend will run on `http://localhost:5173` and proxy API requests to the b
 ├── Frontend/
 │   ├── src/
 │   │   ├── api/            # API client & types
-│   │   ├── components/     # Navbar, Footer, Layout
-│   │   ├── hooks/          # Custom hooks
-│   │   └── pages/          # Page components
+│   │   ├── components/     # Navbar, Footer, Skeletons
+│   │   ├── pages/          # Page components
+│   │   └── utils/          # Cloudinary, image processing
 │   └── package.json
 └── README.md
 ```
@@ -116,10 +95,10 @@ The frontend will run on `http://localhost:5173` and proxy API requests to the b
 | POST   | `/api/announcements`      | Admin         | Create announcement  |
 | PUT    | `/api/announcements/:id`  | Admin         | Update announcement  |
 | DELETE | `/api/announcements/:id`  | Admin         | Delete announcement  |
-
-## Next Steps
-
-- [ ] Add image upload for events, members, and gallery
-- [ ] Add pagination for lists
-- [ ] Add email notifications
-- [ ] Deploy to production (Vercel + Railway + Supabase)
+| GET    | `/api/gallery`            | No            | List gallery items   |
+| POST   | `/api/gallery`            | Yes           | Upload to gallery    |
+| POST   | `/api/gallery/:id/like`   | Yes           | Like/unlike item     |
+| POST   | `/api/gallery/:id/save`   | Yes           | Save/unsave item     |
+| DELETE | `/api/gallery/:id`        | Owner/Admin   | Delete gallery item  |
+| GET    | `/api/profile`            | Yes           | Get own profile      |
+| PUT    | `/api/profile`            | Yes           | Update own profile   |
