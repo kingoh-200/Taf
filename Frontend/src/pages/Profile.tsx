@@ -1,41 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
-
-function SavedGallerySection(user: any) {
-  const [saved, setSaved] = useState<any[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    import('../api/client').then(({ default: api }) => {
-      api.get('/gallery/saved').then((res) => setSaved(res.data)).catch(() => {});
-    });
-  }, [user]);
-
-  if (saved.length === 0) return null;
-
-  return (
-    <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
-      <h3 style={{ marginBottom: '1rem' }}>
-        <i className="fa-solid fa-bookmark" style={{ marginRight: '0.4rem', color: '#F7941D' }}></i>
-        Saved from Gallery
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.6rem' }}>
-        {saved.map((item: any) => (
-          <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 8, overflow: 'hidden', aspectRatio: '1' }}>
-            {item.type === 'video' ? (
-              <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} preload="metadata" />
-            ) : (
-              <img src={item.url} alt={item.caption || 'Saved'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-            )}
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -53,7 +21,22 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [savedItems, setSavedItems] = useState<any[]>([]);
 
+  const populateForm = useCallback((userData: User) => {
+    setForm({
+      name: userData.name || '',
+      email: userData.email || '',
+      profile_image: userData.profile_image || '',
+      title: (userData as any).title || '',
+      department: (userData as any).department || '',
+      location: (userData as any).location || '',
+      skills: (userData as any).skills || '',
+      social_link: (userData as any).social_link || '',
+    });
+  }, []);
+
+  // Fetch fresh profile from API on mount
   useEffect(() => {
     const stored = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -63,17 +46,22 @@ const Profile = () => {
     }
     const userData = JSON.parse(stored);
     setUser(userData);
-    setForm({
-      name: userData.name || '',
-      email: userData.email || '',
-      profile_image: userData.profile_image || '',
-      title: userData.title || '',
-      department: userData.department || '',
-      location: userData.location || '',
-      skills: userData.skills || '',
-      social_link: userData.social_link || '',
-    });
-  }, [navigate]);
+    populateForm(userData);
+
+    // Fetch latest data from server
+    api.get('/profile').then((res) => {
+      const fresh = res.data as User;
+      setUser(fresh);
+      populateForm(fresh);
+      localStorage.setItem('user', JSON.stringify(fresh));
+    }).catch(() => {});
+  }, [navigate, populateForm]);
+
+  // Load saved gallery items
+  useEffect(() => {
+    if (!user) return;
+    api.get('/gallery/saved').then((res) => setSavedItems(res.data)).catch(() => {});
+  }, [user]);
 
   const handleSave = async () => {
     setError('');
@@ -91,8 +79,9 @@ const Profile = () => {
         skills: form.skills || null,
         social_link: form.social_link || null,
       });
-      setUser(res.data);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      const updated = res.data as User;
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
       setEditing(false);
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
@@ -151,7 +140,7 @@ const Profile = () => {
     ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : user.username.charAt(0).toUpperCase();
 
-  const userSkills = user.skills ? (user as any).skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+  const userSkills = (user as any).skills ? (user as any).skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
 
   return (
     <div className="page" style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -161,8 +150,8 @@ const Profile = () => {
       <div className="card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
         {/* Avatar */}
         <div style={styles.avatarContainer}>
-          {(user as any).profile_image ? (
-            <img src={(user as any).profile_image} alt="Profile" style={styles.avatarImage} />
+          {user.profile_image ? (
+            <img src={user.profile_image} alt="Profile" style={styles.avatarImage} />
           ) : (
             <div style={styles.avatar}>
               <span style={styles.initials}>{initials}</span>
@@ -283,7 +272,7 @@ const Profile = () => {
             )}
 
             {/* Action buttons */}
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => setEditing(true)} className="btn">
                 <i className="fa-solid fa-pen-to-square" style={{ marginRight: '0.4rem' }}></i>Edit Profile
               </button>
@@ -318,7 +307,7 @@ const Profile = () => {
                 </p>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '1rem 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
 
               <div className="form-group">
                 <label><i className="fa-solid fa-briefcase" style={{ marginRight: '0.3rem' }}></i>Title / Position</label>
@@ -349,11 +338,14 @@ const Profile = () => {
               </div>
             </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={handleSave} className="btn" disabled={loading}>
                 {loading ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Saving...</> : <><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save Changes</>}
               </button>
-              <button onClick={() => { setEditing(false); setForm({ name: user.name || '', email: user.email || '', profile_image: (user as any).profile_image || '', title: (user as any).title || '', department: (user as any).department || '', location: (user as any).location || '', skills: (user as any).skills || '', social_link: (user as any).social_link || '' }); }} className="btn btn-secondary">
+              <button onClick={() => {
+                setEditing(false);
+                populateForm(user);
+              }} className="btn btn-secondary">
                 <i className="fa-solid fa-xmark" style={{ marginRight: '0.3rem' }}></i>Cancel
               </button>
             </div>
@@ -381,7 +373,7 @@ const Profile = () => {
             <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} placeholder="Re-enter new password" />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button onClick={handlePasswordChange} className="btn" disabled={passwordLoading}>
               {passwordLoading ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Updating...</> : <><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Update Password</>}
             </button>
@@ -393,7 +385,25 @@ const Profile = () => {
       )}
 
       {/* Saved from Gallery */}
-      {SavedGallerySection(user)}
+      {savedItems.length > 0 && (
+        <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>
+            <i className="fa-solid fa-bookmark" style={{ marginRight: '0.4rem', color: '#F7941D' }}></i>
+            Saved from Gallery
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.6rem' }}>
+            {savedItems.map((item: any) => (
+              <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 8, overflow: 'hidden', aspectRatio: '1' }}>
+                {item.type === 'video' ? (
+                  <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} preload="metadata" />
+                ) : (
+                  <img src={item.url} alt={item.caption || 'Saved'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -419,7 +429,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 100,
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '3px solid #e2e8f0',
+    border: '3px solid var(--border)',
   },
   initials: {
     fontSize: '2.5rem',
