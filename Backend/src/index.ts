@@ -9,6 +9,7 @@ import { memberRoutes } from './routes/members';
 import { announcementRoutes } from './routes/announcements';
 import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
+import { galleryRoutes } from './routes/gallery';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -30,6 +31,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -99,6 +101,38 @@ async function initializeDatabase() {
         is_pinned BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS gallery_items (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        type VARCHAR(20) NOT NULL DEFAULT 'image',
+        url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        caption VARCHAR(500),
+        like_count INTEGER DEFAULT 0,
+        save_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS gallery_likes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        item_id INTEGER REFERENCES gallery_items(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, item_id)
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS gallery_saves (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        item_id INTEGER REFERENCES gallery_items(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, item_id)
       )
     `);
     console.log('✅ Tables created/verified');

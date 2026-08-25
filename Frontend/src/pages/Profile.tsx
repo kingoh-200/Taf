@@ -5,6 +5,38 @@ import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
 
+function SavedGallerySection(user: any) {
+  const [saved, setSaved] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    import('../api/client').then(({ default: api }) => {
+      api.get('/gallery/saved').then((res) => setSaved(res.data)).catch(() => {});
+    });
+  }, [user]);
+
+  if (saved.length === 0) return null;
+
+  return (
+    <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+      <h3 style={{ marginBottom: '1rem' }}>
+        <i className="fa-solid fa-bookmark" style={{ marginRight: '0.4rem', color: '#F7941D' }}></i>
+        Saved from Gallery
+      </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.6rem' }}>
+        {saved.map((item: any) => (
+          <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 8, overflow: 'hidden', aspectRatio: '1' }}>
+            {item.type === 'video' ? (
+              <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} preload="metadata" />
+            ) : (
+              <img src={item.url} alt={item.caption || 'Saved'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -359,6 +391,9 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      {/* Saved from Gallery */}
+      {SavedGallerySection(user)}
     </div>
   );
 };
