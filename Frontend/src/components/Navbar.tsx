@@ -6,6 +6,7 @@ const Navbar = () => {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
   });
@@ -17,14 +18,13 @@ const Navbar = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Also sync on mount (for SSR or fresh load)
+  // Also sync on mount
   useEffect(() => {
     const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (saved) {
       setTheme(saved);
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      // Check system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) {
         setTheme('dark');
@@ -49,17 +49,28 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close dropdown on navigation
+  // Close menus on navigation
   useEffect(() => {
     setDropdownOpen(false);
+    setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     setDropdownOpen(false);
-    // Force full page reload so all components re-read from cleared localStorage
+    setMobileMenuOpen(false);
     window.location.href = '/';
   };
 
@@ -74,14 +85,16 @@ const Navbar = () => {
     { to: '/gallery', label: 'Gallery', icon: 'fa-images' },
   ];
 
-  const links = publicLinks;
-
   return (
     <nav className="navbar" style={styles.nav}>
       <div style={styles.inner}>
-        <Link to="/" style={styles.logo}><img src="/logo.png" alt="Teens Aloud Foundation" style={styles.logoImg} /></Link>
-        <div style={styles.links}>
-          {links.map((link) => (
+        <Link to="/" style={styles.logo}>
+          <img src="/logo.png" alt="Teens Aloud Foundation" style={styles.logoImg} />
+        </Link>
+
+        {/* Desktop links */}
+        <div style={styles.links} className="navbar-desktop-links">
+          {publicLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -97,18 +110,13 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Theme Toggle */}
           <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             <i className={`fa-solid ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
           </button>
 
           {user ? (
             <div style={styles.userMenu} ref={dropdownRef}>
-              {/* Profile button with dropdown */}
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                style={styles.profileBtn}
-              >
+              <button onClick={() => setDropdownOpen(!dropdownOpen)} style={styles.profileBtn}>
                 {user.profile_image ? (
                   <img src={user.profile_image} alt="Profile" style={styles.avatarImg} />
                 ) : (
@@ -118,7 +126,6 @@ const Navbar = () => {
                 <i className={`fa-solid fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '0.7rem', marginLeft: '0.3rem', color: 'var(--text-light)' }}></i>
               </button>
 
-              {/* Dropdown menu */}
               {dropdownOpen && (
                 <div style={styles.dropdown}>
                   <div style={styles.dropdownHeader}>
@@ -162,7 +169,64 @@ const Navbar = () => {
             <Link to="/login" style={styles.loginBtn}><i className="fa-solid fa-right-to-bracket" style={{ marginRight: '0.3rem' }}></i>Login</Link>
           )}
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          className="navbar-hamburger"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+        </button>
       </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="navbar-mobile-overlay">
+          {publicLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`mobile-nav-link ${location.pathname === link.to ? 'active' : ''}`}
+            >
+              <i className={`fa-solid ${link.icon}`}></i>
+              {link.label}
+            </Link>
+          ))}
+
+          <div className="mobile-divider"></div>
+
+          <button onClick={toggleTheme} className="mobile-btn">
+            <i className={`fa-solid ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
+            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+          </button>
+
+          {user ? (
+            <>
+              <Link to="/profile" className="mobile-nav-link">
+                <i className="fa-solid fa-user"></i>
+                My Profile
+              </Link>
+              {user.role === 'admin' && (
+                <Link to="/admin" className="mobile-nav-link">
+                  <i className="fa-solid fa-gear"></i>
+                  Admin Dashboard
+                </Link>
+              )}
+              <div className="mobile-divider"></div>
+              <button onClick={handleLogout} className="mobile-btn danger">
+                <i className="fa-solid fa-right-from-bracket"></i>
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="mobile-login">
+              <i className="fa-solid fa-right-to-bracket" style={{ marginRight: '0.4rem' }}></i>
+              Login
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 };
@@ -178,7 +242,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   inner: {
     width: '100%',
-    padding: '0 2rem',
+    padding: '0 1.5rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',

@@ -24,7 +24,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   inner: {
     width: '100%',
-    padding: '0 2rem',
+    padding: '0 1rem',
     margin: '0 auto',
   },
   subtext: {

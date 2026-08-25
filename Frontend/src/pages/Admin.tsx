@@ -206,6 +206,9 @@ const tabStyles: Record<string, React.CSSProperties> = {
     gap: '0.5rem',
     marginBottom: '1.5rem',
     marginTop: '1.5rem',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    paddingBottom: '0.25rem',
   },
   tab: {
     padding: '0.5rem 1rem',
@@ -214,6 +217,8 @@ const tabStyles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: '0.95rem',
     fontWeight: 500,
+    whiteSpace: 'nowrap' as const,
+    flexShrink: 0,
   },
 };
 

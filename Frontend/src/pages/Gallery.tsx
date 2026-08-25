@@ -395,8 +395,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '1.2rem',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+    gap: '1rem',
   },
   gridItem: {
     padding: 0,
@@ -412,7 +412,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: 240,
     objectFit: 'cover',
     display: 'block',
-    transition: 'transform 0.3s',
   },
   mediaOverlay: {
     position: 'absolute',
@@ -495,16 +494,16 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    padding: '1rem',
+    padding: '0.5rem',
   },
   lightboxContent: {
     maxWidth: 700,
     width: '100%',
     background: 'var(--bg-elevated)',
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
-    maxHeight: '90vh',
+    maxHeight: '95vh',
     display: 'flex',
     flexDirection: 'column',
   },

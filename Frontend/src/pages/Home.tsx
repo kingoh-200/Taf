@@ -98,7 +98,7 @@ const Home = () => {
             <p style={heroStyles.subtitle}>
               Join us for exciting events, workshops, and a community of passionate teens making a difference in Kenya.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/register" className="btn">
                 <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join the Club
               </Link>
@@ -211,7 +211,7 @@ const Home = () => {
 const heroStyles: Record<string, React.CSSProperties> = {
   hero: {
     textAlign: 'center',
-    padding: '3rem 2rem',
+    padding: '3rem 1.5rem',
     background: 'var(--bg-alt)',
     borderRadius: 12,
     marginTop: '1.5rem',
@@ -219,15 +219,17 @@ const heroStyles: Record<string, React.CSSProperties> = {
     transition: 'background 0.3s, border-color 0.3s',
   },
   title: {
-    fontSize: '2.5rem',
+    fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
     marginBottom: '0.5rem',
+    lineHeight: 1.2,
   },
   subtitle: {
-    fontSize: '1.15rem',
+    fontSize: 'clamp(0.9rem, 2.5vw, 1.15rem)',
     color: 'var(--text-light)',
     marginBottom: '1.5rem',
     maxWidth: 500,
     margin: '0 auto 1.5rem',
+    lineHeight: 1.5,
   },
   /* Logged-in hero */
   loggedInHero: {
@@ -245,7 +247,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
     gap: '1rem',
     background: 'var(--bg-elevated)',
     borderRadius: 16,
-    padding: '1rem 1.5rem',
+    padding: '1rem 1.2rem',
     boxShadow: 'var(--shadow)',
     border: '1px solid var(--border)',
     maxWidth: 400,
@@ -270,7 +272,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   greeting: {
-    fontSize: '1.15rem',
+    fontSize: 'clamp(0.95rem, 2.5vw, 1.15rem)',
     margin: 0,
     color: 'var(--text)',
     textAlign: 'left' as const,
@@ -288,7 +290,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
   },
   quickActions: {
     display: 'flex',
-    gap: '0.8rem',
+    gap: '0.6rem',
     justifyContent: 'center',
     flexWrap: 'wrap' as const,
   },
@@ -297,7 +299,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
     flexDirection: 'column' as const,
     alignItems: 'center',
     gap: '0.3rem',
-    padding: '0.8rem 1.2rem',
+    padding: '0.7rem 1rem',
     background: 'var(--bg-elevated)',
     borderRadius: 12,
     border: '1px solid var(--border)',
@@ -306,7 +308,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
     fontSize: '0.8rem',
     fontWeight: 500,
     transition: 'all 0.2s',
-    minWidth: 80,
+    minWidth: 72,
   },
   adminAction: {
     borderColor: '#F7941D',
@@ -316,7 +318,7 @@ const heroStyles: Record<string, React.CSSProperties> = {
   statsRow: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '2rem',
+    gap: 'clamp(1rem, 4vw, 2rem)',
     marginTop: '1.5rem',
     padding: '1rem',
     background: 'var(--bg-elevated)',
@@ -344,6 +346,8 @@ const heroStyles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap' as const,
+    gap: '0.5rem',
   },
   seeAll: {
     fontSize: '0.85rem',
