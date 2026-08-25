@@ -93,18 +93,19 @@ const Footer = () => {
           {/* Link columns */}
           <div style={styles.linksGrid}>
             <div>
-              <h4 style={styles.linkTitle}>Links</h4>
+              <h4 style={styles.linkTitle}>Explore</h4>
               <ul style={styles.linkList}>
-                <li><Link to="/" style={styles.link}>Home</Link></li>
+                <li><Link to="/about" style={styles.link}>About Us</Link></li>
+                <li><Link to="/ministries" style={styles.link}>Ministries</Link></li>
                 <li><Link to="/events" style={styles.link}>Events</Link></li>
                 <li><Link to="/gallery" style={styles.link}>Gallery</Link></li>
               </ul>
             </div>
             <div>
-              <h4 style={styles.linkTitle}>Community</h4>
+              <h4 style={styles.linkTitle}>Connect</h4>
               <ul style={styles.linkList}>
-                <li><Link to="/members" style={styles.link}>Members</Link></li>
-                <li><Link to="/register" style={styles.link}>Join Us</Link></li>
+                <li><Link to="/members" style={styles.link}>Our Members</Link></li>
+                <li><Link to="/register" style={styles.link}>Join TAF</Link></li>
                 <li><Link to="/profile" style={styles.link}>My Profile</Link></li>
               </ul>
             </div>
@@ -121,14 +122,17 @@ const Footer = () => {
           {/* Social icons */}
           <div style={styles.socialCol}>
             <div style={styles.socialIcons}>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="Facebook">
+              <a href="https://www.facebook.com/teensaloudghana/" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="Facebook">
                 <i className="fa-brands fa-facebook-f"></i>
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="Twitter">
-                <i className="fa-brands fa-twitter"></i>
+              <a href="https://x.com/TeensAloud" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="X (Twitter)">
+                <i className="fa-brands fa-x-twitter"></i>
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="Instagram">
+              <a href="https://www.instagram.com/teens_aloud_foundation/" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="Instagram">
                 <i className="fa-brands fa-instagram"></i>
+              </a>
+              <a href="https://www.youtube.com/@TAFGlobal" target="_blank" rel="noopener noreferrer" style={styles.socialBtn} aria-label="YouTube">
+                <i className="fa-brands fa-youtube"></i>
               </a>
             </div>
           </div>
@@ -138,11 +142,11 @@ const Footer = () => {
             <h3 style={styles.brandName}>Teens Aloud Foundation</h3>
             <p style={styles.infoLine}>
               <i className="fa-solid fa-location-dot" style={styles.infoIcon}></i>
-              Nairobi, Kenya
+              Global — Ghana, Nigeria, Kenya, UK & more
             </p>
             <p style={styles.infoLine}>
-              <i className="fa-solid fa-phone" style={styles.infoIcon}></i>
-              Contact us for more info
+              <i className="fa-solid fa-globe" style={styles.infoIcon}></i>
+              <a href="https://teensaloud.com" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>teensaloud.com</a>
             </p>
             <p style={styles.infoLine}>
               <i className="fa-solid fa-envelope" style={styles.infoIcon}></i>

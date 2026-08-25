@@ -95,15 +95,18 @@ const Home = () => {
           /* ===== LOGGED-OUT HERO ===== */
           <div>
             <h1 style={heroStyles.title}>Welcome to Teens Aloud Foundation</h1>
+            <p style={{ ...heroStyles.subtitle, fontStyle: 'italic', color: 'var(--primary)' }}>
+              Eternal interest in teens everywhere
+            </p>
             <p style={heroStyles.subtitle}>
-              Join us for exciting events, workshops, and a community of passionate teens making a difference in Kenya.
+              A Non-Denominational Christian youth group challenging a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.
             </p>
             <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/register" className="btn">
-                <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join the Club
+                <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join TAF
               </Link>
-              <Link to="/login" className="btn btn-secondary">
-                <i className="fa-solid fa-right-to-bracket" style={{ marginRight: '0.4rem' }}></i>Login
+              <Link to="/about" className="btn btn-secondary">
+                <i className="fa-solid fa-circle-info" style={{ marginRight: '0.4rem' }}></i>About Us
               </Link>
             </div>
           </div>
@@ -191,7 +194,7 @@ const Home = () => {
       {loading && (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
           <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>
-          Loading club data...
+          Loading...
         </div>
       )}
 

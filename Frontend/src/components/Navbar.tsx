@@ -80,8 +80,10 @@ const Navbar = () => {
 
   const publicLinks = [
     { to: '/', label: 'Home', icon: 'fa-house' },
+    { to: '/about', label: 'About', icon: 'fa-users' },
+    { to: '/ministries', label: 'Ministries', icon: 'fa-church' },
     { to: '/events', label: 'Events', icon: 'fa-calendar-days' },
-    { to: '/members', label: 'Members', icon: 'fa-users' },
+    { to: '/members', label: 'Members', icon: 'fa-user-group' },
     { to: '/gallery', label: 'Gallery', icon: 'fa-images' },
   ];
 
