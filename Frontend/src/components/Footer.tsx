@@ -6,31 +6,31 @@ const Footer = () => {
       {/* Mountain/forest scene illustration */}
       <div style={styles.scene}>
         <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMax slice" style={styles.svg}>
-          {/* Sky gradient */}
           <defs>
             <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1a3a4a" />
-              <stop offset="100%" stopColor="#0d2130" />
+              <stop offset="0%" stopColor="#5ba3b5" />
+              <stop offset="60%" stopColor="#3d8a9e" />
+              <stop offset="100%" stopColor="#2d6a7a" />
             </linearGradient>
             <linearGradient id="mountain1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1e4d5c" />
-              <stop offset="100%" stopColor="#153842" />
+              <stop offset="0%" stopColor="#3a7a8a" />
+              <stop offset="100%" stopColor="#2d6575" />
             </linearGradient>
             <linearGradient id="mountain2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1a4050" />
-              <stop offset="100%" stopColor="#0f2e3a" />
+              <stop offset="0%" stopColor="#2f6e7e" />
+              <stop offset="100%" stopColor="#245a68" />
             </linearGradient>
             <linearGradient id="trees1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0c2a35" />
-              <stop offset="100%" stopColor="#091f28" />
+              <stop offset="0%" stopColor="#1e5530" />
+              <stop offset="100%" stopColor="#184a28" />
             </linearGradient>
             <linearGradient id="trees2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0a222d" />
-              <stop offset="100%" stopColor="#071a22" />
+              <stop offset="0%" stopColor="#174a28" />
+              <stop offset="100%" stopColor="#123e20" />
             </linearGradient>
           </defs>
 
-          {/* Background */}
+          {/* Sky */}
           <rect width="1200" height="280" fill="url(#skyGrad)" />
 
           {/* Far mountains */}
@@ -40,7 +40,7 @@ const Footer = () => {
           <polygon points="0,200 100,160 200,180 320,130 440,170 560,120 680,155 780,115 880,145 1000,110 1100,140 1200,125 1200,280 0,280" fill="url(#mountain2)" opacity="0.85" />
 
           {/* Birds */}
-          <g fill="none" stroke="#2a5a6a" strokeWidth="1.2" opacity="0.5">
+          <g fill="none" stroke="#4a8a9a" strokeWidth="1.2" opacity="0.6">
             <path d="M620,95 Q625,88 630,95" />
             <path d="M640,85 Q645,78 650,85" />
             <path d="M660,92 Q664,86 668,92" />
@@ -49,30 +49,22 @@ const Footer = () => {
           </g>
 
           {/* Fire lookout tower */}
-          <g fill="none" stroke="#1a3a48" strokeWidth="2">
-            {/* Tower legs */}
+          <g fill="none" stroke="#2a5a3a" strokeWidth="2">
             <line x1="590" y1="105" x2="580" y2="175" />
             <line x1="610" y1="105" x2="620" y2="175" />
-            {/* Cross braces */}
             <line x1="585" y1="130" x2="615" y2="150" />
             <line x1="615" y1="130" x2="585" y2="150" />
             <line x1="583" y1="155" x2="617" y2="165" />
-            {/* Platform */}
-            <rect x="582" y="100" width="36" height="8" fill="#1a3a48" rx="1" />
-            {/* Cabin */}
-            <rect x="586" y="82" width="28" height="18" fill="#15303e" rx="1" />
-            {/* Roof */}
-            <polygon points="583,82 600,70 617,82" fill="#1a3a48" />
-            {/* Windows */}
-            <rect x="590" y="86" width="6" height="5" fill="#1e5060" rx="0.5" />
-            <rect x="600" y="86" width="6" height="5" fill="#1e5060" rx="0.5" />
-            {/* Door */}
-            <rect x="596" y="92" width="8" height="8" fill="#1e5060" rx="0.5" />
+            <rect x="582" y="100" width="36" height="8" fill="#2a5a3a" rx="1" />
+            <rect x="586" y="82" width="28" height="18" fill="#245030" rx="1" />
+            <polygon points="583,82 600,70 617,82" fill="#2a5a3a" />
+            <rect x="590" y="86" width="6" height="5" fill="#4a8a6a" rx="0.5" />
+            <rect x="600" y="86" width="6" height="5" fill="#4a8a6a" rx="0.5" />
+            <rect x="596" y="92" width="8" height="8" fill="#4a8a6a" rx="0.5" />
           </g>
 
           {/* Tree line (layer 1 - back) */}
           <g fill="url(#trees1)">
-            {/* Individual pine trees */}
             {[50,90,130,170,210,250,300,350,400,450,500,540,660,700,740,780,820,870,920,960,1010,1060,1110,1150].map((x, i) => {
               const h = 30 + (i % 5) * 8;
               const w = 12 + (i % 3) * 4;
@@ -92,7 +84,7 @@ const Footer = () => {
           </g>
 
           {/* Ground */}
-          <rect x="0" y="210" width="1200" height="70" fill="#071a22" />
+          <rect x="0" y="210" width="1200" height="70" fill="#123e20" />
         </svg>
       </div>
 
@@ -165,7 +157,7 @@ const Footer = () => {
       <div style={styles.bottomBar}>
         <div style={styles.bottomInner}>
           <div style={styles.bottomLeft}>
-            <img src="/logo.png" alt="Teens Aloud" style={{ height: 24, width: 'auto', filter: 'brightness(10)' }} />
+            <img src="/logo.png" alt="Teens Aloud" style={{ height: 24, width: 'auto' }} />
           </div>
           <div style={styles.bottomCenter}>
             <span style={styles.bottomLink}>Privacy Policy</span>
@@ -186,8 +178,8 @@ const Footer = () => {
 const styles: Record<string, React.CSSProperties> = {
   footer: {
     marginTop: '4rem',
-    color: '#c8dce4',
-    background: '#0a1f2a',
+    color: '#e8f4f0',
+    background: '#1a4a3a',
     transition: 'background 0.3s, color 0.3s',
   },
   scene: {
@@ -202,7 +194,7 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 160,
   },
   contentSection: {
-    background: '#0a1f2a',
+    background: '#1a4a3a',
     padding: '2rem 0 1.5rem',
   },
   contentInner: {
@@ -234,7 +226,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   link: {
     display: 'block',
-    color: '#9ab8c8',
+    color: '#b8dcd0',
     fontSize: '0.9rem',
     textDecoration: 'none',
     padding: '0.25rem 0',
@@ -253,11 +245,11 @@ const styles: Record<string, React.CSSProperties> = {
     width: 40,
     height: 40,
     borderRadius: '50%',
-    border: '2px solid #2a5a6a',
+    border: '2px solid #4a9a7a',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#c8dce4',
+    color: '#e8f4f0',
     textDecoration: 'none',
     fontSize: '1rem',
     transition: 'all 0.2s',
@@ -277,19 +269,19 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: '0.85rem',
-    color: '#9ab8c8',
+    color: '#b8dcd0',
     marginBottom: '0.3rem',
   },
   infoIcon: {
     fontSize: '0.8rem',
-    color: '#3a8a9a',
+    color: '#5ab89a',
     width: 14,
     textAlign: 'center' as const,
   },
   bottomBar: {
-    borderTop: '1px solid #1a3a48',
+    borderTop: '1px solid #2a6a50',
     padding: '1rem 0',
-    background: '#081820',
+    background: '#15402e',
   },
   bottomInner: {
     maxWidth: 1100,
@@ -313,12 +305,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bottomLink: {
     fontSize: '0.8rem',
-    color: '#7a9aaa',
+    color: '#8abfa8',
     cursor: 'pointer',
     transition: 'color 0.2s',
   },
   bottomDot: {
-    color: '#3a5a6a',
+    color: '#4a8a6a',
   },
   bottomRight: {
     display: 'flex',
@@ -326,7 +318,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   copyright: {
     fontSize: '0.8rem',
-    color: '#7a9aaa',
+    color: '#8abfa8',
   },
 };
 
