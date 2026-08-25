@@ -6,12 +6,12 @@ export const getAllMembers = async (_req: AuthRequest, res: Response) => {
   try {
     // Get manually added members
     const manualMembers = await db('members')
-      .select('id', 'name', 'role', 'bio', 'image_url', 'created_at')
+      .select('id', 'name', 'role', 'bio', 'image_url', 'title', 'department', 'location', 'skills', 'social_link', 'is_active', 'created_at')
       .orderBy('created_at', 'desc');
 
     // Get registered users (exclude password_hash)
     const registeredUsers = await db('users')
-      .select('id', 'username', 'name', 'email', 'role', 'profile_image', 'created_at')
+      .select('id', 'username', 'name', 'email', 'role', 'profile_image', 'title', 'department', 'location', 'skills', 'social_link', 'is_active', 'created_at')
       .orderBy('created_at', 'desc');
 
     // Combine both lists, marking the source
@@ -20,8 +20,15 @@ export const getAllMembers = async (_req: AuthRequest, res: Response) => {
         id: `user-${u.id}`,
         name: u.name || u.username,
         role: u.role,
-        bio: u.email ? `${u.email}` : null,
+        bio: null,
         image_url: u.profile_image,
+        title: u.title,
+        department: u.department,
+        location: u.location,
+        skills: u.skills,
+        social_link: u.social_link,
+        email: u.email,
+        is_active: u.is_active ?? true,
         created_at: u.created_at,
         source: 'user',
       })),
@@ -51,9 +58,9 @@ export const getMemberById = async (req: AuthRequest, res: Response) => {
 
 export const createMember = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, role, bio, image_url } = req.body;
+    const { name, role, bio, image_url, title, department, location, skills, social_link } = req.body;
     const [member] = await db('members')
-      .insert({ name, role, bio, image_url })
+      .insert({ name, role, bio, image_url, title, department, location, skills, social_link })
       .returning('*');
     res.status(201).json(member);
   } catch (error) {
@@ -64,10 +71,10 @@ export const createMember = async (req: AuthRequest, res: Response) => {
 
 export const updateMember = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, role, bio, image_url } = req.body;
+    const { name, role, bio, image_url, title, department, location, skills, social_link } = req.body;
     const [member] = await db('members')
       .where({ id: req.params.id })
-      .update({ name, role, bio, image_url })
+      .update({ name, role, bio, image_url, title, department, location, skills, social_link })
       .returning('*');
     if (!member) return res.status(404).json({ error: 'Member not found.' });
     res.json(member);

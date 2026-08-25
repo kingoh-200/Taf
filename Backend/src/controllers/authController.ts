@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response) => {
         email: email || null,
         role: isAdminEmail ? 'admin' : 'member',
       })
-      .returning(['id', 'username', 'name', 'email', 'role']);
+      .returning(['id', 'username', 'name', 'email', 'role', 'title', 'department', 'location', 'skills', 'social_link', 'is_active']);
 
     const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
     const token = jwt.sign(
@@ -59,6 +59,12 @@ function sanitizeUser(user: any, requestorRole?: string) {
     username: user.username,
     name: user.name,
     profile_image: user.profile_image || null,
+    title: user.title || null,
+    department: user.department || null,
+    location: user.location || null,
+    skills: user.skills || null,
+    social_link: user.social_link || null,
+    is_active: user.is_active ?? true,
     role: user.role,
   };
   // Only show email if it's not the admin email, or if the requestor is admin

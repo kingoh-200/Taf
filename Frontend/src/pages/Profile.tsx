@@ -9,7 +9,11 @@ const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', profile_image: '' });
+  const [form, setForm] = useState({
+    name: '', email: '', profile_image: '',
+    title: '', department: '', location: '',
+    skills: '', social_link: '',
+  });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +35,11 @@ const Profile = () => {
       name: userData.name || '',
       email: userData.email || '',
       profile_image: userData.profile_image || '',
+      title: userData.title || '',
+      department: userData.department || '',
+      location: userData.location || '',
+      skills: userData.skills || '',
+      social_link: userData.social_link || '',
     });
   }, [navigate]);
 
@@ -44,6 +53,11 @@ const Profile = () => {
         name: form.name || null,
         email: form.email || null,
         profile_image: form.profile_image || null,
+        title: form.title || null,
+        department: form.department || null,
+        location: form.location || null,
+        skills: form.skills || null,
+        social_link: form.social_link || null,
       });
       setUser(res.data);
       localStorage.setItem('user', JSON.stringify(res.data));
@@ -105,6 +119,8 @@ const Profile = () => {
     ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : user.username.charAt(0).toUpperCase();
 
+  const userSkills = user.skills ? (user as any).skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+
   return (
     <div className="page" style={{ maxWidth: 600, margin: '0 auto' }}>
       {error && <div className="alert alert-error"><i className="fa-solid fa-circle-exclamation" style={{ marginRight: '0.4rem' }}></i>{error}</div>}
@@ -113,8 +129,8 @@ const Profile = () => {
       <div className="card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
         {/* Avatar */}
         <div style={styles.avatarContainer}>
-          {user.profile_image ? (
-            <img src={user.profile_image} alt="Profile" style={styles.avatarImage} />
+          {(user as any).profile_image ? (
+            <img src={(user as any).profile_image} alt="Profile" style={styles.avatarImage} />
           ) : (
             <div style={styles.avatar}>
               <span style={styles.initials}>{initials}</span>
@@ -134,10 +150,8 @@ const Profile = () => {
                     try {
                       let imageUrl: string;
                       if (isCloudinaryConfigured) {
-                        // Upload to Cloudinary (hosted in the cloud, auto-cropped)
                         imageUrl = await uploadToCloudinary(file, 'profiles');
                       } else {
-                        // Fallback: crop + compress locally, store as base64
                         imageUrl = await processImage(file, 400, 0.8);
                       }
                       setForm({ ...form, profile_image: imageUrl });
@@ -161,13 +175,13 @@ const Profile = () => {
 
             <span style={{
               ...styles.roleBadge,
-              background: user.role === 'admin' ? '#dbeafe' : '#f0fdf4',
-              color: user.role === 'admin' ? '#2563eb' : '#16a34a',
+              background: user.role === 'admin' ? '#fef3c7' : '#e0f4fc',
+              color: user.role === 'admin' ? '#92400e' : '#0077A8',
             }}>
-              {user.role === 'admin' ? <><i className="fa-solid fa-star" style={{ marginRight: '0.3rem' }}></i>Admin</> : <><i className="fa-solid fa-user" style={{ marginRight: '0.3rem' }}></i>Member</>}
+              {user.role === 'admin' ? <><i className="fa-solid fa-crown" style={{ marginRight: '0.3rem' }}></i>Admin</> : <><i className="fa-solid fa-id-badge" style={{ marginRight: '0.3rem' }}></i>Member</>}
             </span>
 
-            {/* User details */}
+            {/* Profile details */}
             <div style={styles.details}>
               <div style={styles.detailRow}>
                 <span style={styles.detailLabel}><i className="fa-solid fa-at" style={{ marginRight: '0.4rem' }}></i>Username</span>
@@ -185,11 +199,49 @@ const Profile = () => {
                   <span style={styles.detailValue}>{user.email}</span>
                 </div>
               )}
+              {(user as any).title && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}><i className="fa-solid fa-briefcase" style={{ marginRight: '0.4rem' }}></i>Title</span>
+                  <span style={styles.detailValue}>{(user as any).title}</span>
+                </div>
+              )}
+              {(user as any).department && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}><i className="fa-solid fa-people-group" style={{ marginRight: '0.4rem' }}></i>Department</span>
+                  <span style={styles.detailValue}>{(user as any).department}</span>
+                </div>
+              )}
+              {(user as any).location && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}><i className="fa-solid fa-location-dot" style={{ marginRight: '0.4rem' }}></i>Location</span>
+                  <span style={styles.detailValue}>{(user as any).location}</span>
+                </div>
+              )}
+              {(user as any).social_link && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}><i className="fa-solid fa-link" style={{ marginRight: '0.4rem' }}></i>Website</span>
+                  <a href={(user as any).social_link} target="_blank" rel="noopener noreferrer" style={{ color: '#00A0DC', fontSize: '0.9rem' }}>{(user as any).social_link}</a>
+                </div>
+              )}
               <div style={styles.detailRow}>
                 <span style={styles.detailLabel}><i className="fa-solid fa-shield-halved" style={{ marginRight: '0.4rem' }}></i>Role</span>
                 <span style={styles.detailValue}>{user.role}</span>
               </div>
             </div>
+
+            {/* Skills */}
+            {userSkills.length > 0 && (
+              <div style={{ textAlign: 'left', marginTop: '1rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>
+                  <i className="fa-solid fa-tags" style={{ marginRight: '0.3rem' }}></i>Skills
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
+                  {userSkills.map((skill: string, i: number) => (
+                    <span key={i} style={styles.skillTag}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {user.role === 'admin' && (
               <div style={styles.adminBanner}>
@@ -218,35 +270,50 @@ const Profile = () => {
             <div style={{ textAlign: 'left' }}>
               <div className="form-group">
                 <label><i className="fa-solid fa-id-card" style={{ marginRight: '0.3rem' }}></i>Full Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Your full name"
-                />
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your full name" />
               </div>
 
               <div className="form-group">
                 <label><i className="fa-solid fa-envelope" style={{ marginRight: '0.3rem' }}></i>Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="your@email.com"
-                />
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="your@email.com" />
               </div>
 
               <div className="form-group">
                 <label><i className="fa-solid fa-image" style={{ marginRight: '0.3rem' }}></i>Profile Picture URL</label>
-                <input
-                  type="url"
-                  value={form.profile_image}
-                  onChange={(e) => setForm({ ...form, profile_image: e.target.value })}
-                  placeholder="https://example.com/photo.jpg"
-                />
+                <input type="url" value={form.profile_image} onChange={(e) => setForm({ ...form, profile_image: e.target.value })} placeholder="https://example.com/photo.jpg" />
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.3rem' }}>
                   Or click the camera icon on your avatar to upload a file
                 </p>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '1rem 0' }} />
+
+              <div className="form-group">
+                <label><i className="fa-solid fa-briefcase" style={{ marginRight: '0.3rem' }}></i>Title / Position</label>
+                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Computer Science Senior" />
+              </div>
+
+              <div className="form-group">
+                <label><i className="fa-solid fa-people-group" style={{ marginRight: '0.3rem' }}></i>Department</label>
+                <input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="e.g. Media & Communications" />
+              </div>
+
+              <div className="form-group">
+                <label><i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>Location</label>
+                <input type="text" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="e.g. Nairobi" />
+              </div>
+
+              <div className="form-group">
+                <label><i className="fa-solid fa-tags" style={{ marginRight: '0.3rem' }}></i>Skills</label>
+                <input type="text" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} placeholder="e.g. Technology, Web Development, Design" />
+                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.3rem' }}>
+                  Separate skills with commas
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label><i className="fa-solid fa-link" style={{ marginRight: '0.3rem' }}></i>Website / Social Link</label>
+                <input type="url" value={form.social_link} onChange={(e) => setForm({ ...form, social_link: e.target.value })} placeholder="https://your-website.com" />
               </div>
             </div>
 
@@ -254,7 +321,7 @@ const Profile = () => {
               <button onClick={handleSave} className="btn" disabled={loading}>
                 {loading ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Saving...</> : <><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save Changes</>}
               </button>
-              <button onClick={() => { setEditing(false); setForm({ name: user.name || '', email: user.email || '', profile_image: user.profile_image || '' }); }} className="btn btn-secondary">
+              <button onClick={() => { setEditing(false); setForm({ name: user.name || '', email: user.email || '', profile_image: (user as any).profile_image || '', title: (user as any).title || '', department: (user as any).department || '', location: (user as any).location || '', skills: (user as any).skills || '', social_link: (user as any).social_link || '' }); }} className="btn btn-secondary">
                 <i className="fa-solid fa-xmark" style={{ marginRight: '0.3rem' }}></i>Cancel
               </button>
             </div>
@@ -269,32 +336,17 @@ const Profile = () => {
 
           <div className="form-group">
             <label><i className="fa-solid fa-lock" style={{ marginRight: '0.3rem' }}></i>Current Password</label>
-            <input
-              type="password"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              placeholder="Enter current password"
-            />
+            <input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} placeholder="Enter current password" />
           </div>
 
           <div className="form-group">
             <label><i className="fa-solid fa-lock" style={{ marginRight: '0.3rem' }}></i>New Password</label>
-            <input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              placeholder="At least 6 characters"
-            />
+            <input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} placeholder="At least 6 characters" />
           </div>
 
           <div className="form-group">
             <label><i className="fa-solid fa-lock" style={{ marginRight: '0.3rem' }}></i>Confirm New Password</label>
-            <input
-              type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              placeholder="Re-enter new password"
-            />
+            <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} placeholder="Re-enter new password" />
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -357,7 +409,8 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'background 0.2s',
   },
   roleBadge: {
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
     padding: '0.3rem 0.8rem',
     borderRadius: 20,
     fontSize: '0.85rem',
@@ -373,6 +426,7 @@ const styles: Record<string, React.CSSProperties> = {
   detailRow: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
     padding: '0.6rem 0',
     borderBottom: '1px solid #f1f5f9',
   },
@@ -390,6 +444,16 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#e0f4fc',
     borderRadius: 8,
     fontSize: '0.9rem',
+    color: '#0077A8',
+    border: '1px solid #b3e0f2',
+  },
+  skillTag: {
+    display: 'inline-block',
+    padding: '0.2rem 0.6rem',
+    borderRadius: 12,
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    background: '#e0f4fc',
     color: '#0077A8',
     border: '1px solid #b3e0f2',
   },

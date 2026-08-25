@@ -6,7 +6,7 @@ const Footer = () => {
           <img src="/logo.png" alt="Teens Aloud Foundation" style={{ height: 30, width: 'auto' }} />
         </div>
         <p>© {new Date().getFullYear()} Teens Aloud Foundation Kenya. All rights reserved.</p>
-        <p style={styles.subtext}><i className="fa-solid fa-code" style={{ marginRight: '0.3rem' }}></i>Built with React, Node.js & PostgreSQL</p>
+        {/* <p style={styles.subtext}><i className="fa-solid fa-code" style={{ marginRight: '0.3rem' }}></i>Built with React, Node.js & PostgreSQL</p> */}
       </div>
     </footer>
   );

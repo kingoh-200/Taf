@@ -13,6 +13,12 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
       name: user.name,
       email: user.email,
       profile_image: user.profile_image,
+      title: user.title,
+      department: user.department,
+      location: user.location,
+      skills: user.skills,
+      social_link: user.social_link,
+      is_active: user.is_active,
       role: user.role,
     });
   } catch (error) {
@@ -23,7 +29,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, email, profile_image } = req.body;
+    const { name, email, profile_image, title, department, location, skills, social_link } = req.body;
     const userId = req.user!.id;
 
     // Check if email is already taken by another user
@@ -39,6 +45,11 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     if (name !== undefined) updates.name = name;
     if (email !== undefined) updates.email = email;
     if (profile_image !== undefined) updates.profile_image = profile_image;
+    if (title !== undefined) updates.title = title;
+    if (department !== undefined) updates.department = department;
+    if (location !== undefined) updates.location = location;
+    if (skills !== undefined) updates.skills = skills;
+    if (social_link !== undefined) updates.social_link = social_link;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No fields to update.' });
@@ -49,7 +60,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const [updated] = await db('users')
       .where({ id: userId })
       .update(updates)
-      .returning(['id', 'username', 'name', 'email', 'profile_image', 'role']);
+      .returning(['id', 'username', 'name', 'email', 'profile_image', 'title', 'department', 'location', 'skills', 'social_link', 'is_active', 'role']);
 
     if (!updated) {
       return res.status(404).json({ error: 'User not found.' });

@@ -14,6 +14,12 @@ export interface Member {
   role: string | null;
   bio: string | null;
   image_url: string | null;
+  title: string | null;
+  department: string | null;
+  location: string | null;
+  skills: string | null;
+  social_link: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -31,6 +37,12 @@ export interface User {
   name: string | null;
   email: string | null;
   profile_image: string | null;
+  title: string | null;
+  department: string | null;
+  location: string | null;
+  skills: string | null;
+  social_link: string | null;
+  is_active: boolean;
   password_hash: string;
   role: string;
   created_at: string;
