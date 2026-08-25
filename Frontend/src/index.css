@@ -268,6 +268,20 @@ hr {
   margin: 1rem 0;
 }
 
+/* Footer link hovers */
+footer a:hover {
+  color: #ffffff !important;
+  text-decoration: none;
+}
+footer .social-btn:hover {
+  background: #1a5a6a;
+  border-color: #3a8a9a;
+  color: #fff;
+}
+footer .bottom-link:hover {
+  color: #ffffff;
+}
+
 /* ========== RESPONSIVE ========== */
 
 /* Tablet */
@@ -357,6 +371,25 @@ hr {
 
   .card {
     padding: 0.8rem;
+  }
+}
+
+/* Footer responsive */
+@media (max-width: 768px) {
+  footer .content-inner {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+  footer .links-grid {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  footer .bottom-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.6rem;
+    padding: 0 1rem;
   }
 }
 
