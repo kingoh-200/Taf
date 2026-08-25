@@ -1,10 +1,9 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { User } from '../api/types';
 
 const Navbar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -60,7 +59,8 @@ const Navbar = () => {
     localStorage.removeItem('user');
     setUser(null);
     setDropdownOpen(false);
-    navigate('/');
+    // Force full page reload so all components re-read from cleared localStorage
+    window.location.href = '/';
   };
 
   const toggleTheme = () => {
