@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
+import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -131,10 +132,17 @@ const Profile = () => {
                   if (file) {
                     setImageUploading(true);
                     try {
-                      const processed = await processImage(file, 400, 0.8);
-                      setForm({ ...form, profile_image: processed });
+                      let imageUrl: string;
+                      if (isCloudinaryConfigured) {
+                        // Upload to Cloudinary (hosted in the cloud, auto-cropped)
+                        imageUrl = await uploadToCloudinary(file, 'profiles');
+                      } else {
+                        // Fallback: crop + compress locally, store as base64
+                        imageUrl = await processImage(file, 400, 0.8);
+                      }
+                      setForm({ ...form, profile_image: imageUrl });
                     } catch {
-                      setError('Failed to process image. Try a different file.');
+                      setError('Failed to upload image. Try a different file.');
                     } finally {
                       setImageUploading(false);
                     }
