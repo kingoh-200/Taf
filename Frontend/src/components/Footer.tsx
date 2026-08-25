@@ -5,7 +5,7 @@ const Footer = () => {
     <footer style={styles.footer}>
       {/* Mountain/forest scene illustration */}
       <div style={styles.scene}>
-        <svg viewBox="0 0 1200 280" preserveAspectRatio="xMidYMax slice" style={styles.svg}>
+        <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax slice" style={styles.svg}>
           <defs>
             <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#5ba3b5" />
@@ -31,60 +31,59 @@ const Footer = () => {
           </defs>
 
           {/* Sky */}
-          <rect width="1200" height="280" fill="url(#skyGrad)" />
+          <rect width="1200" height="180" fill="url(#skyGrad)" />
 
           {/* Far mountains */}
-          <polygon points="0,180 80,120 180,150 280,90 400,130 500,80 600,110 700,70 800,100 900,60 1000,90 1100,75 1200,100 1200,280 0,280" fill="url(#mountain1)" opacity="0.7" />
+          <polygon points="0,110 80,70 180,90 280,50 400,80 500,40 600,65 700,30 800,55 900,25 1000,50 1100,40 1200,55 1200,180 0,180" fill="url(#mountain1)" opacity="0.7" />
 
           {/* Mid mountains */}
-          <polygon points="0,200 100,160 200,180 320,130 440,170 560,120 680,155 780,115 880,145 1000,110 1100,140 1200,125 1200,280 0,280" fill="url(#mountain2)" opacity="0.85" />
+          <polygon points="0,120 100,95 200,110 320,80 440,105 560,75 680,95 780,70 880,90 1000,65 1100,85 1200,75 1200,180 0,180" fill="url(#mountain2)" opacity="0.85" />
 
           {/* Birds */}
           <g fill="none" stroke="#4a8a9a" strokeWidth="1.2" opacity="0.6">
-            <path d="M620,95 Q625,88 630,95" />
-            <path d="M640,85 Q645,78 650,85" />
-            <path d="M660,92 Q664,86 668,92" />
-            <path d="M680,80 Q684,74 688,80" />
-            <path d="M700,88 Q703,83 706,88" />
+            <path d="M620,55 Q625,48 630,55" />
+            <path d="M640,45 Q645,38 650,45" />
+            <path d="M660,52 Q664,46 668,52" />
+            <path d="M680,40 Q684,34 688,40" />
+            <path d="M700,48 Q703,43 706,48" />
           </g>
 
           {/* Fire lookout tower */}
-          <g fill="none" stroke="#2a5a3a" strokeWidth="2">
-            <line x1="590" y1="105" x2="580" y2="175" />
-            <line x1="610" y1="105" x2="620" y2="175" />
-            <line x1="585" y1="130" x2="615" y2="150" />
-            <line x1="615" y1="130" x2="585" y2="150" />
-            <line x1="583" y1="155" x2="617" y2="165" />
-            <rect x="582" y="100" width="36" height="8" fill="#2a5a3a" rx="1" />
-            <rect x="586" y="82" width="28" height="18" fill="#245030" rx="1" />
-            <polygon points="583,82 600,70 617,82" fill="#2a5a3a" />
-            <rect x="590" y="86" width="6" height="5" fill="#4a8a6a" rx="0.5" />
-            <rect x="600" y="86" width="6" height="5" fill="#4a8a6a" rx="0.5" />
-            <rect x="596" y="92" width="8" height="8" fill="#4a8a6a" rx="0.5" />
+          <g fill="none" stroke="#2a5a3a" strokeWidth="1.5">
+            <line x1="590" y1="70" x2="583" y2="120" />
+            <line x1="610" y1="70" x2="617" y2="120" />
+            <line x1="587" y1="88" x2="613" y2="102" />
+            <line x1="613" y1="88" x2="587" y2="102" />
+            <rect x="584" y="66" width="32" height="5" fill="#2a5a3a" rx="1" />
+            <rect x="588" y="54" width="24" height="12" fill="#245030" rx="1" />
+            <polygon points="586,54 600,44 614,54" fill="#2a5a3a" />
+            <rect x="591" y="57" width="4" height="4" fill="#4a8a6a" rx="0.5" />
+            <rect x="599" y="57" width="4" height="4" fill="#4a8a6a" rx="0.5" />
+            <rect x="596" y="62" width="8" height="4" fill="#4a8a6a" rx="0.5" />
           </g>
 
           {/* Tree line (layer 1 - back) */}
           <g fill="url(#trees1)">
             {[50,90,130,170,210,250,300,350,400,450,500,540,660,700,740,780,820,870,920,960,1010,1060,1110,1150].map((x, i) => {
-              const h = 30 + (i % 5) * 8;
-              const w = 12 + (i % 3) * 4;
-              return <polygon key={i} points={`${x},${175 - h} ${x - w},175 ${x + w},175`} />;
+              const h = 18 + (i % 5) * 5;
+              const w = 8 + (i % 3) * 3;
+              return <polygon key={i} points={`${x},${118 - h} ${x - w},118 ${x + w},118`} />;
             })}
-            <rect x="0" y="175" width="1200" height="105" />
+            <rect x="0" y="118" width="1200" height="62" />
           </g>
 
           {/* Tree line (layer 2 - front) */}
           <g fill="url(#trees2)">
             {[30,75,120,160,200,240,280,330,380,430,470,520,560,640,680,720,760,800,850,900,940,990,1040,1080,1130,1170].map((x, i) => {
-              const h = 35 + (i % 4) * 10;
-              const w = 14 + (i % 3) * 5;
-              return <polygon key={i} points={`${x},${195 - h} ${x - w},195 ${x + w},195`} />;
+              const h = 22 + (i % 4) * 6;
+              const w = 10 + (i % 3) * 4;
+              return <polygon key={i} points={`${x},${135 - h} ${x - w},135 ${x + w},135`} />;
             })}
-            <rect x="0" y="195" width="1200" height="85" />
+            <rect x="0" y="135" width="1200" height="45" />
           </g>
 
           {/* Ground */}
-          <rect x="0" y="210" width="1200" height="70" fill="#123e20" />
+          <rect x="0" y="145" width="1200" height="35" fill="#123e20" />
         </svg>
       </div>
 
@@ -191,18 +190,17 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     height: 'auto',
     display: 'block',
-    minHeight: 160,
   },
   contentSection: {
     background: '#1a4a3a',
-    padding: '2rem 0 1.5rem',
+    padding: '1.2rem 0 1rem',
   },
   contentInner: {
     maxWidth: 1100,
     margin: '0 auto',
     padding: '0 2rem',
     display: 'flex',
-    gap: '3rem',
+    gap: '2rem',
     flexWrap: 'wrap' as const,
   },
   linksGrid: {
@@ -212,10 +210,10 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: 280,
   },
   linkTitle: {
-    fontSize: '1rem',
+    fontSize: '0.85rem',
     fontWeight: 700,
     color: '#ffffff',
-    marginBottom: '0.8rem',
+    marginBottom: '0.5rem',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
   },
@@ -227,9 +225,9 @@ const styles: Record<string, React.CSSProperties> = {
   link: {
     display: 'block',
     color: '#b8dcd0',
-    fontSize: '0.9rem',
+    fontSize: '0.82rem',
     textDecoration: 'none',
-    padding: '0.25rem 0',
+    padding: '0.15rem 0',
     transition: 'color 0.2s',
   },
   socialCol: {
@@ -242,8 +240,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.8rem',
   },
   socialBtn: {
-    width: 40,
-    height: 40,
+    width: 34,
+    height: 34,
     borderRadius: '50%',
     border: '2px solid #4a9a7a',
     display: 'flex',
@@ -259,18 +257,18 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: 220,
   },
   brandName: {
-    fontSize: '1.1rem',
+    fontSize: '0.95rem',
     fontWeight: 700,
     color: '#ffffff',
-    marginBottom: '0.6rem',
+    marginBottom: '0.4rem',
   },
   infoLine: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    fontSize: '0.85rem',
+    fontSize: '0.8rem',
     color: '#b8dcd0',
-    marginBottom: '0.3rem',
+    marginBottom: '0.15rem',
   },
   infoIcon: {
     fontSize: '0.8rem',
@@ -280,7 +278,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bottomBar: {
     borderTop: '1px solid #2a6a50',
-    padding: '1rem 0',
+    padding: '0.6rem 0',
     background: '#15402e',
   },
   bottomInner: {
