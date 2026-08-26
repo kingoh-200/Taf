@@ -10,6 +10,7 @@ const Navbar = () => {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
   });
@@ -19,6 +20,12 @@ const Navbar = () => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -117,7 +124,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="navbar" style={styles.nav}>
+    <nav className={`navbar${scrolled ? ' scrolled' : ''}`} style={styles.nav}>
       <div style={styles.inner}>
         <Link to="/" style={styles.logo}>
           <img src="/logo.png" alt="Teens Aloud Foundation" style={styles.logoImg} />

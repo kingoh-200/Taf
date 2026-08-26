@@ -38,11 +38,28 @@ const MembersSkeleton = () => (
 const Members = () => {
   const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 15000 });
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'member'>('all');
+  const [filterDepartment, setFilterDepartment] = useState('all');
 
   if (loading) return <MembersSkeleton />;
 
-  const admins = members.filter((m) => m.role === 'admin');
-  const regularMembers = members.filter((m) => m.role !== 'admin');
+  // Extract unique departments
+  const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
+
+  // Filter members
+  const filteredMembers = members.filter((m) => {
+    const matchesSearch = !search ||
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      (m.bio && m.bio.toLowerCase().includes(search.toLowerCase())) ||
+      (m.skills && m.skills.toLowerCase().includes(search.toLowerCase()));
+    const matchesRole = filterRole === 'all' || m.role === filterRole;
+    const matchesDept = filterDepartment === 'all' || m.department === filterDepartment;
+    return matchesSearch && matchesRole && matchesDept;
+  });
+
+  const admins = filteredMembers.filter((m) => m.role === 'admin');
+  const regularMembers = filteredMembers.filter((m) => m.role !== 'admin');
 
   return (
     <div className="page">
@@ -52,6 +69,43 @@ const Members = () => {
       <div style={{ marginTop: '0.5rem' }}>
         <NewItemsBanner count={newCount} onClick={acceptNew} />
       </div>
+
+      {/* Search & Filter */}
+      {members.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '1rem', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+            <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, skills, bio..."
+              style={{ width: '100%', padding: '0.55rem 0.7rem 0.55rem 2.2rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+            />
+          </div>
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value as any)}
+            style={{ padding: '0.55rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admins</option>
+            <option value="member">Members</option>
+          </select>
+          {departments.length > 0 && (
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              style={{ padding: '0.55rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+            >
+              <option value="all">All Departments</option>
+              {departments.map((d) => (
+                <option key={d} value={d!}>{d}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {members.length === 0 ? (
         <p><i className="fa-solid fa-user-slash" style={{ marginRight: '0.3rem' }}></i>No members to display yet.</p>
@@ -118,8 +172,8 @@ const MemberCard = ({ member, onView }: { member: MemberData; onView: (m: Member
         <div style={{
           ...styles.avatar,
           background: isAdmin
-            ? 'linear-gradient(135deg, #F7941D, #E07E10)'
-            : 'linear-gradient(135deg, #00A0DC, #0089BB)',
+            ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))'
+            : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         }}>
           {member.image_url ? (
             <img src={member.image_url} alt={member.name} style={styles.img} />
@@ -131,8 +185,8 @@ const MemberCard = ({ member, onView }: { member: MemberData; onView: (m: Member
           <h3 style={styles.name}>{member.name}</h3>
           <span style={{
             ...styles.roleBadge,
-            background: isAdmin ? '#fef3c7' : '#e0f4fc',
-            color: isAdmin ? '#92400e' : '#0077A8',
+            background: isAdmin ? 'var(--admin-bg)' : 'var(--member-bg)',
+            color: isAdmin ? 'var(--admin-text)' : 'var(--member-text)',
           }}>
             <i className={`fa-solid ${isAdmin ? 'fa-crown' : 'fa-id-badge'}`} style={{ marginRight: '0.3rem', fontSize: '0.75rem' }}></i>
             {isAdmin ? 'Admin' : 'Member'}

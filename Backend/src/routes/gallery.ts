@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getGalleryItems, createGalleryItem, deleteGalleryItem, toggleLike, toggleSave, getSavedItems } from '../controllers/galleryController';
+import { getGalleryItems, createGalleryItem, deleteGalleryItem, toggleLike, toggleSave, getSavedItems, getComments, addComment, deleteComment } from '../controllers/galleryController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -21,5 +21,10 @@ router.post('/:id/save', authenticate, toggleSave);
 
 // Protected: get user's saved items (for profile page)
 router.get('/saved', authenticate, getSavedItems);
+
+// Comments
+router.get('/:id/comments', getComments);
+router.post('/:id/comments', authenticate, addComment);
+router.delete('/:id/comments/:commentId', authenticate, deleteComment);
 
 export { router as galleryRoutes };

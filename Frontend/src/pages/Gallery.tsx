@@ -23,6 +23,17 @@ interface GalleryItem {
   saved: boolean;
 }
 
+interface Comment {
+  id: number;
+  item_id: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+  username: string;
+  author_name: string | null;
+  author_image: string | null;
+}
+
 const Gallery = () => {
   const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 10000 });
   const [optimisticItems, setOptimisticItems] = useState<Map<number, Partial<GalleryItem>>>(new Map());
@@ -41,6 +52,9 @@ const Gallery = () => {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState('');
   const [viewItem, setViewItem] = useState<GalleryItem | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -202,6 +216,39 @@ const Gallery = () => {
     } catch {}
   };
 
+  // Comments
+  const loadComments = async (itemId: number) => {
+    setLoadingComments(true);
+    try {
+      const res = await api.get(`/gallery/${itemId}/comments`);
+      setComments(res.data);
+    } catch {}
+    setLoadingComments(false);
+  };
+
+  const handleAddComment = async () => {
+    if (!viewItem || !newComment.trim()) return;
+    try {
+      const res = await api.post(`/gallery/${viewItem.id}/comments`, { content: newComment.trim() });
+      setComments([...comments, res.data]);
+      setNewComment('');
+    } catch {}
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!viewItem) return;
+    try {
+      await api.delete(`/gallery/${viewItem.id}/comments/${commentId}`);
+      setComments(comments.filter((c) => c.id !== commentId));
+    } catch {}
+  };
+
+  // Load comments when viewing an item
+  useEffect(() => {
+    if (viewItem) loadComments(viewItem.id);
+    else setComments([]);
+  }, [viewItem?.id]);
+
   const displayItems = activeTab === 'all' ? items : savedItems;
 
   return (
@@ -279,10 +326,12 @@ const Gallery = () => {
         </div>
       )}
 
-      {/* Gallery Grid */}
+      {/* Gallery Grid — Masonry */}
       {loading ? (
-        <div style={styles.grid}>
-          <GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton /><GalleryItemSkeleton />
+        <div className="masonry-grid">
+          {[1,2,3,4,5,6].map((i) => (
+            <div key={i} className="masonry-item"><GalleryItemSkeleton /></div>
+          ))}
         </div>
       ) : displayItems.length === 0 ? (
         <div style={styles.empty}>
@@ -295,9 +344,9 @@ const Gallery = () => {
           </p>
         </div>
       ) : (
-        <div style={styles.grid}>
+        <div className="masonry-grid">
           {displayItems.map((item) => (
-            <div key={item.id} className="card" style={styles.gridItem}>
+            <div key={item.id} className="card masonry-item" style={styles.gridItem}>
               {/* Image/Video */}
               <div style={styles.mediaContainer} onClick={() => setViewItem(item)}>
                 {item.type === 'video' ? (
@@ -400,6 +449,59 @@ const Gallery = () => {
                   </button>
                 )}
               </div>
+
+              {/* Comments section */}
+              <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '0.8rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+                  <i className="fa-solid fa-comments" style={{ marginRight: '0.3rem' }}></i>
+                  Comments ({comments.length})
+                </h4>
+
+                {loadingComments ? (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading comments...</p>
+                ) : comments.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>No comments yet. Be the first!</p>
+                ) : (
+                  <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: '0.5rem' }}>
+                    {comments.map((c) => (
+                      <div key={c.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.5rem', padding: '0.4rem', background: 'var(--bg-alt)', borderRadius: 8 }}>
+                        {c.author_image ? (
+                          <img src={c.author_image} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #00A0DC, #F7941D)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>
+                            {(c.author_name || c.username || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)' }}>{c.author_name || c.username}</div>
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-light)', wordBreak: 'break-word' }}>{c.content}</div>
+                        </div>
+                        {user && (user.id === c.user_id || user.role === 'admin') && (
+                          <button onClick={() => handleDeleteComment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem', fontSize: '0.7rem' }} title="Delete">
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {user && (
+                  <div className="comment-input-row">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write a comment..."
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                      style={{ flex: 1, padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+                    />
+                    <button onClick={handleAddComment} disabled={!newComment.trim()} style={{ padding: '0.5rem 0.8rem', borderRadius: 8, border: 'none', background: newComment.trim() ? 'var(--primary)' : 'var(--border)', color: newComment.trim() ? '#fff' : 'var(--text-muted)', cursor: newComment.trim() ? 'pointer' : 'default', fontSize: '0.85rem' }}>
+                      <i className="fa-solid fa-paper-plane"></i>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -459,9 +561,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   media: {
     width: '100%',
-    height: 240,
-    objectFit: 'cover',
     display: 'block',
+    objectFit: 'cover' as const,
   },
   mediaOverlay: {
     position: 'absolute',

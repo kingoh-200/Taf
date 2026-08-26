@@ -178,3 +178,79 @@ export const getSavedItems = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch saved items.' });
   }
 };
+
+// Get comments for a gallery item
+export const getComments = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const comments = await db('gallery_comments')
+      .select(
+        'gallery_comments.*',
+        'users.username',
+        'users.name as author_name',
+        'users.profile_image as author_image',
+      )
+      .leftJoin('users', 'gallery_comments.user_id', 'users.id')
+      .where('gallery_comments.item_id', id)
+      .orderBy('gallery_comments.created_at', 'asc');
+    res.json(comments);
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ error: 'Failed to fetch comments.' });
+  }
+};
+
+// Add a comment to a gallery item
+export const addComment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user!.id;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Comment cannot be empty.' });
+    }
+
+    const [comment] = await db('gallery_comments')
+      .insert({ item_id: id, user_id: userId, content: content.trim() })
+      .returning('*');
+
+    const fullComment = await db('gallery_comments')
+      .select(
+        'gallery_comments.*',
+        'users.username',
+        'users.name as author_name',
+        'users.profile_image as author_image',
+      )
+      .leftJoin('users', 'gallery_comments.user_id', 'users.id')
+      .where('gallery_comments.id', comment.id)
+      .first();
+
+    res.status(201).json(fullComment);
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ error: 'Failed to add comment.' });
+  }
+};
+
+// Delete a comment (owner or admin)
+export const deleteComment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, commentId } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    const comment = await db('gallery_comments').where({ id: commentId }).first();
+    if (!comment) return res.status(404).json({ error: 'Comment not found.' });
+
+    if (comment.user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    await db('gallery_comments').where({ id: commentId }).del();
+    res.json({ message: 'Comment deleted.' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ error: 'Failed to delete comment.' });
+  }
+};

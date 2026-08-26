@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cachedGet } from '../api/client';
 import type { Event, Announcement } from '../api/types';
+import HeroCarousel from '../components/HeroCarousel';
+import NewsletterForm from '../components/NewsletterForm';
 
 const Home = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -84,8 +86,8 @@ const Home = () => {
                   <div style={heroStyles.roleRow}>
                     <span style={{
                       ...heroStyles.roleBadge,
-                      background: user.role === 'admin' ? '#fef3c7' : '#e0f4fc',
-                      color: user.role === 'admin' ? '#92400e' : '#0077A8',
+                      background: user.role === 'admin' ? 'var(--admin-bg)' : 'var(--member-bg)',
+                      color: user.role === 'admin' ? 'var(--admin-text)' : 'var(--member-text)',
                     }}>
                       <i className={`fa-solid ${user.role === 'admin' ? 'fa-crown' : 'fa-id-badge'}`} style={{ marginRight: '0.3rem', fontSize: '0.75rem' }}></i>
                       {user.role === 'admin' ? 'Admin' : 'Member'}
@@ -119,15 +121,9 @@ const Home = () => {
           </div>
         ) : (
           /* ===== LOGGED-OUT HERO ===== */
-          <div>
-            <h1 style={heroStyles.title}>Welcome to Teens Aloud Foundation</h1>
-            <p style={{ ...heroStyles.subtitle, fontStyle: 'italic', color: 'var(--primary)' }}>
-              Eternal interest in teens everywhere
-            </p>
-            <p style={heroStyles.subtitle}>
-              A Non-Denominational Christian youth group challenging a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.
-            </p>
-            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ width: '100%' }}>
+            <HeroCarousel />
+            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
               <Link to="/register" className="btn">
                 <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join TAF
               </Link>
@@ -276,6 +272,53 @@ const Home = () => {
           </p>
         </section>
       )}
+
+      {/* Newsletter Subscribe — logged out only */}
+      {!user && (
+        <section style={{
+          marginTop: '2.5rem',
+          padding: '2rem',
+          background: 'var(--bg-alt)',
+          borderRadius: 12,
+          border: '1px solid var(--border)',
+          textAlign: 'center',
+        }}>
+          <i className="fa-solid fa-envelope-open-text" style={{ fontSize: '2rem', color: 'var(--primary)', marginBottom: '0.8rem', display: 'block' }}></i>
+          <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.3rem' }}>Stay Connected</h2>
+          <p style={{ color: 'var(--text-light)', margin: '0 0 1rem', fontSize: '0.95rem' }}>
+            Get updates on events, ministries, and community news.
+          </p>
+          <NewsletterForm />
+        </section>
+      )}
+
+      {/* Ministries preview — logged out */}
+      {!user && (
+        <section style={{ marginTop: '2.5rem' }}>
+          <div style={heroStyles.sectionHeader}>
+            <h2 style={{ margin: 0 }}>
+              <i className="fa-solid fa-church" style={{ marginRight: '0.5rem', color: 'var(--accent)' }}></i>
+              Our Ministries
+            </h2>
+            <Link to="/ministries" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>
+          </div>
+          <div className="grid-2" style={{ marginTop: '0.8rem' }}>
+            {[
+              { icon: 'fa-heart', name: 'Love Fellowship', desc: 'Bringing young people together to spur themselves unto love and good works.' },
+              { icon: 'fa-campground', name: 'Camp Vista', desc: 'Camps for re-igniting passions and building strong social networks.' },
+              { icon: 'fa-couch', name: 'Sermon On The Sofa', desc: 'Mixed-bag evangelistic events in secondary schools.' },
+            ].map((m) => (
+              <div key={m.name} className="card" style={{ padding: '1.2rem' }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+                  <i className={`fa-solid ${m.icon}`} style={{ color: 'var(--primary)' }}></i>
+                </div>
+                <h3 style={{ margin: '0 0 0.3rem', fontSize: '1rem' }}>{m.name}</h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>{m.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
@@ -331,13 +374,13 @@ const heroStyles: Record<string, React.CSSProperties> = {
     height: 56,
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '2px solid #00A0DC',
+    border: '2px solid var(--primary)',
   },
   profileAvatar: {
     width: 56,
     height: 56,
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #00A0DC, #F7941D)',
+    background: 'linear-gradient(135deg, var(--primary), var(--accent))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
