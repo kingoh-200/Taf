@@ -35,6 +35,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Routes that require authentication — only redirect to login for these
+const PROTECTED_ROUTES = ['/profile', '/admin', '/gallery/upload'];
+
 // Cache GET responses automatically
 api.interceptors.response.use(
   (response) => {
@@ -45,9 +48,19 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const reqUrl = error.config?.url || '';
+      const isProtected = PROTECTED_ROUTES.some((r) => reqUrl.includes(r));
+
+      if (isProtected) {
+        // Only clear auth and redirect for protected routes
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // Don't redirect if already on login/register
+        if (!window.location.pathname.match(/^\/(login|register)$/)) {
+          window.location.href = '/login';
+        }
+      }
+      // For public routes (events, members, etc.), just let the request fail silently
     }
     return Promise.reject(error);
   }
