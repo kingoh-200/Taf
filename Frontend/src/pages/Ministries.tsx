@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const ministries = [
   {
@@ -36,6 +37,12 @@ const ministries = [
 ];
 
 const Ministries = () => {
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
+
   return (
     <div className="page">
       <section style={styles.hero}>
@@ -68,9 +75,15 @@ const Ministries = () => {
           Whether you're a teen, young adult, or someone who believes in the potential of young people — there's a place for you here.
         </p>
         <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/register" className="btn">
-            <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join Us Today
-          </Link>
+          {user ? (
+            <Link to="/gallery" className="btn">
+              <i className="fa-solid fa-images" style={{ marginRight: '0.4rem' }}></i>Gallery
+            </Link>
+          ) : (
+            <Link to="/register" className="btn">
+              <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join Us Today
+            </Link>
+          )}
           <Link to="/members" className="btn btn-secondary">
             <i className="fa-solid fa-users" style={{ marginRight: '0.4rem' }}></i>Meet Our Members
           </Link>
