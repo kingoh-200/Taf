@@ -8,24 +8,47 @@ const Home = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [memberCount, setMemberCount] = useState(0);
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+
+  // Independent loading states per section
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [membersLoading, setMembersLoading] = useState(true);
+  const [wakingUp, setWakingUp] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
 
-    // Load data with cache + retry for Render cold starts
-    Promise.allSettled([
-      cachedGet('/events'),
-      cachedGet('/announcements'),
-      cachedGet('/members'),
-    ]).then(([eventsRes, annRes, membersRes]) => {
-      if (eventsRes.status === 'fulfilled') setEvents((eventsRes.value as any).data.slice(0, 3));
-      if (annRes.status === 'fulfilled') setAnnouncements((annRes.value as any).data.slice(0, 3));
-      if (membersRes.status === 'fulfilled') setMemberCount((membersRes.value as any).data.length);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    // Show "server waking up" hint after 8 seconds
+    const wakeTimer = setTimeout(() => setWakingUp(true), 8000);
+
+    // Fire all3 requests independently — each section resolves on its own
+    cachedGet('/events')
+      .then((res) => {
+        setEvents((res.data as any).data?.slice(0, 3) || []);
+      })
+      .catch(() => {})
+      .finally(() => setEventsLoading(false));
+
+    cachedGet('/announcements')
+      .then((res) => {
+        setAnnouncements((res.data as any).data?.slice(0, 3) || []);
+      })
+      .catch(() => {})
+      .finally(() => setAnnouncementsLoading(false));
+
+    cachedGet('/members')
+      .then((res) => {
+        setMemberCount((res.data as any).data?.length || 0);
+      })
+      .catch(() => {})
+      .finally(() => setMembersLoading(false));
+
+    return () => clearTimeout(wakeTimer);
   }, []);
+
+  const anyLoading = eventsLoading || announcementsLoading || membersLoading;
+  const allDone = !eventsLoading && !announcementsLoading && !membersLoading;
 
   const initials = user
     ? (user.name || user.username).split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -41,7 +64,7 @@ const Home = () => {
           /* ===== LOGGED-IN HERO ===== */
           <div style={heroStyles.loggedInHero}>
             <div style={heroStyles.welcomeRow}>
-              {/* Profile card */}
+              {/* Profile card — instant from localStorage */}
               <div style={heroStyles.profileCard}>
                 {user.profile_image ? (
                   <img src={user.profile_image} alt="You" style={heroStyles.profileImg} />
@@ -68,7 +91,7 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Quick actions */}
+              {/* Quick actions — instant */}
               <div style={heroStyles.quickActions}>
                 <Link to="/profile" style={heroStyles.actionBtn}>
                   <i className="fa-solid fa-user"></i>
@@ -113,93 +136,136 @@ const Home = () => {
         )}
       </section>
 
-      {/* Quick Stats */}
-      {user && !loading && (
+      {/* Quick Stats — independent loading */}
+      {user && (
         <section style={heroStyles.statsRow}>
           <div style={heroStyles.stat}>
             <i className="fa-solid fa-calendar-days" style={{ fontSize: '1.5rem', color: '#00A0DC' }}></i>
-            <span style={heroStyles.statNumber}>{events.length}</span>
+            <span style={heroStyles.statNumber}>
+              {eventsLoading ? <span style={heroStyles.skeletonSmall}></span> : events.length}
+            </span>
             <span style={heroStyles.statLabel}>Events</span>
           </div>
           <div style={heroStyles.stat}>
             <i className="fa-solid fa-users" style={{ fontSize: '1.5rem', color: '#00A0DC' }}></i>
-            <span style={heroStyles.statNumber}>{memberCount}</span>
+            <span style={heroStyles.statNumber}>
+              {membersLoading ? <span style={heroStyles.skeletonSmall}></span> : memberCount}
+            </span>
             <span style={heroStyles.statLabel}>Members</span>
           </div>
           <div style={heroStyles.stat}>
             <i className="fa-solid fa-bullhorn" style={{ fontSize: '1.5rem', color: '#00A0DC' }}></i>
-            <span style={heroStyles.statNumber}>{announcements.length}</span>
+            <span style={heroStyles.statNumber}>
+              {announcementsLoading ? <span style={heroStyles.skeletonSmall}></span> : announcements.length}
+            </span>
             <span style={heroStyles.statLabel}>Updates</span>
           </div>
         </section>
       )}
 
-      {/* Announcements */}
-      {announcements.length > 0 && (
+      {/* Announcements — independent loading */}
+      {user && (
         <section style={{ marginTop: '2rem' }}>
           <div style={heroStyles.sectionHeader}>
             <h2 style={{ margin: 0 }}>
               <i className="fa-solid fa-bullhorn" style={{ marginRight: '0.5rem', color: 'var(--accent)' }}></i>
               Announcements
             </h2>
-            {user && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
+            {announcements.length > 0 && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
           </div>
-          {announcements.map((a) => (
-            <div key={a.id} className="card" style={{ marginTop: '0.8rem' }}>
-              <h3 style={{ margin: '0 0 0.3rem' }}>
-                {a.is_pinned ?            <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: 'var(--accent)', fontSize: '0.9rem' }}></i> : ''}
-                {a.title}
-              </h3>
-              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem' }}>{a.content}</p>
+
+          {announcementsLoading ? (
+            // Skeleton placeholders
+            <div style={{ marginTop: '0.8rem' }}>
+              {[1, 2].map((i) => (
+                <div key={i} className="card" style={{ marginTop: i > 1 ? '0.8rem' : 0 }}>
+                  <div style={{ height: 18, width: '60%', background: 'var(--bg)', borderRadius: 6, marginBottom: 8 }}></div>
+                  <div style={{ height: 14, width: '90%', background: 'var(--bg)', borderRadius: 6 }}></div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : announcements.length > 0 ? (
+            announcements.map((a) => (
+              <div key={a.id} className="card" style={{ marginTop: '0.8rem' }}>
+                <h3 style={{ margin: '0 0 0.3rem' }}>
+                  {a.is_pinned ? <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: 'var(--accent)', fontSize: '0.9rem' }}></i> : ''}
+                  {a.title}
+                </h3>
+                <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem' }}>{a.content}</p>
+              </div>
+            ))
+          ) : null}
         </section>
       )}
 
-      {/* Upcoming Events */}
-      {events.length > 0 && (
+      {/* Upcoming Events — independent loading */}
+      {user && (
         <section style={{ marginTop: '2rem' }}>
           <div style={heroStyles.sectionHeader}>
             <h2 style={{ margin: 0 }}>
               <i className="fa-solid fa-calendar-days" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
               Upcoming Events
             </h2>
-            {user && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
+            {events.length > 0 && <Link to="/events" style={heroStyles.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.2rem' }}></i></Link>}
           </div>
-          <div className="grid-2" style={{ marginTop: '0.8rem' }}>
-            {events.map((event) => (
-              <div key={event.id} className="card" style={{ padding: '1.2rem' }}>
-                <h3 style={{ margin: '0 0 0.4rem' }}>{event.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--primary)', margin: '0 0 0.3rem', fontWeight: 500 }}>
-                  <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem' }}></i>
-                  {new Date(event.event_date).toLocaleDateString('en-US', {
-                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-                  })}
-                </p>
-                {event.location && (
-                  <p style={{ fontSize: '0.85rem', margin: '0 0 0.3rem', color: 'var(--text-light)' }}>
-                    <i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>{event.location}
+
+          {eventsLoading ? (
+            // Skeleton placeholders
+            <div className="grid-2" style={{ marginTop: '0.8rem' }}>
+              {[1, 2].map((i) => (
+                <div key={i} className="card" style={{ padding: '1.2rem' }}>
+                  <div style={{ height: 20, width: '70%', background: 'var(--bg)', borderRadius: 6, marginBottom: 10 }}></div>
+                  <div style={{ height: 14, width: '40%', background: 'var(--bg)', borderRadius: 6, marginBottom: 8 }}></div>
+                  <div style={{ height: 14, width: '55%', background: 'var(--bg)', borderRadius: 6, marginBottom: 8 }}></div>
+                  <div style={{ height: 14, width: '90%', background: 'var(--bg)', borderRadius: 6 }}></div>
+                </div>
+              ))}
+            </div>
+          ) : events.length > 0 ? (
+            <div className="grid-2" style={{ marginTop: '0.8rem' }}>
+              {events.map((event) => (
+                <div key={event.id} className="card" style={{ padding: '1.2rem' }}>
+                  <h3 style={{ margin: '0 0 0.4rem' }}>{event.title}</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--primary)', margin: '0 0 0.3rem', fontWeight: 500 }}>
+                    <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem' }}></i>
+                    {new Date(event.event_date).toLocaleDateString('en-US', {
+                      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+                    })}
                   </p>
-                )}
-                {event.description && (
-                  <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>{event.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
+                  {event.location && (
+                    <p style={{ fontSize: '0.85rem', margin: '0 0 0.3rem', color: 'var(--text-light)' }}>
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>{event.location}
+                    </p>
+                  )}
+                  {event.description && (
+                    <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>{event.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
       )}
 
-      {/* Loading state */}
-      {loading && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>
-          Loading...
+      {/* Server warming up hint */}
+      {user && anyLoading && wakingUp && (
+        <div style={{
+          textAlign: 'center',
+          padding: '1.5rem',
+          marginTop: '2rem',
+          color: 'var(--text-muted)',
+          fontSize: '0.9rem',
+          background: 'var(--bg-alt)',
+          borderRadius: 12,
+          border: '1px solid var(--border)',
+        }}>
+          <i className="fa-solid fa-cloud-sun" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+          Server is waking up — this may take a moment on first visit
         </div>
       )}
 
       {/* Not logged in CTA */}
-      {!user && !loading && events.length === 0 && announcements.length === 0 && (
+      {!user && allDone && events.length === 0 && announcements.length === 0 && (
         <section style={{ textAlign: 'center', padding: '3rem 2rem', marginTop: '2rem' }}>
           <p style={{ color: 'var(--text-light)', fontSize: '1.1rem' }}>
             <i className="fa-solid fa-rocket" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
@@ -357,6 +423,15 @@ const heroStyles: Record<string, React.CSSProperties> = {
     color: 'var(--primary)',
     textDecoration: 'none',
     fontWeight: 500,
+  },
+  /* Skeleton shimmer */
+  skeletonSmall: {
+    display: 'inline-block',
+    width: 28,
+    height: 24,
+    borderRadius: 6,
+    background: 'var(--bg)',
+    animation: 'shimmer 1.5s ease-in-out infinite',
   },
 };
 
