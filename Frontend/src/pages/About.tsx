@@ -1,6 +1,13 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const About = () => {
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
+
   return (
     <div className="page">
       {/* Hero */}
@@ -107,9 +114,15 @@ const About = () => {
           We hope you will draw closer to God and be inspired to partner with us. Feel free to connect with us — we'd love to hear from you.
         </p>
         <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/register" className="btn">
-            <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join TAF
-          </Link>
+          {user ? (
+            <Link to="/gallery" className="btn">
+              <i className="fa-solid fa-images" style={{ marginRight: '0.4rem' }}></i>Gallery
+            </Link>
+          ) : (
+            <Link to="/register" className="btn">
+              <i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join TAF
+            </Link>
+          )}
           <Link to="/ministries" className="btn btn-secondary">
             <i className="fa-solid fa-church" style={{ marginRight: '0.4rem' }}></i>Our Ministries
           </Link>
