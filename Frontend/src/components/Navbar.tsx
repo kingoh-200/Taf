@@ -8,20 +8,18 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
-  const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Apply theme on mount and when changed
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Also sync on mount
   useEffect(() => {
     const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (saved) {
@@ -41,7 +39,6 @@ const Navbar = () => {
     if (stored) setUser(JSON.parse(stored));
   }, [location.pathname]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -52,13 +49,11 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close menus on navigation
   useEffect(() => {
     setDropdownOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -68,26 +63,18 @@ const Navbar = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
 
-  // PWA install prompt detection
+  // PWA install
   useEffect(() => {
-    const ua = navigator.userAgent;
-    const ios = /iphone|ipad|ipod/.test(ua.toLowerCase());
-    setIsIOS(ios);
-
     const handler = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
     const installedHandler = () => setIsInstalled(true);
     window.addEventListener('appinstalled', installedHandler);
-
-    // Check if already in standalone mode
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('appinstalled', installedHandler);
@@ -102,6 +89,8 @@ const Navbar = () => {
         setIsInstalled(true);
         setInstallPrompt(null);
       }
+    } else {
+      setShowInstallModal(true);
     }
   };
 
@@ -157,12 +146,8 @@ const Navbar = () => {
           </button>
 
           {/* Install PWA button — desktop */}
-          {!isInstalled && (installPrompt || isIOS) && (
-            <button
-              onClick={handleInstall}
-              title={isIOS ? 'Tap Share → Add to Home Screen' : 'Install app on your device'}
-              style={installStyles.installBtn}
-            >
+          {!isInstalled && (
+            <button onClick={handleInstall} title="Install app on your device" style={navInstallStyles.installBtn}>
               <i className="fa-solid fa-download"></i>
             </button>
           )}
@@ -255,12 +240,8 @@ const Navbar = () => {
           </button>
 
           {/* Install PWA button — mobile */}
-          {!isInstalled && (installPrompt || isIOS) && (
-            <button
-              onClick={handleInstall}
-              className="mobile-btn"
-              title={isIOS ? 'Tap Share → Add to Home Screen' : 'Install app on your device'}
-            >
+          {!isInstalled && (
+            <button onClick={handleInstall} className="mobile-btn" title="Install app on your device">
               <i className="fa-solid fa-download"></i>
               Install App
             </button>
@@ -290,6 +271,34 @@ const Navbar = () => {
               Login
             </Link>
           )}
+        </div>
+      )}
+
+      {/* Install instructions modal */}
+      {showInstallModal && (
+        <div style={modalStyles.overlay} onClick={() => setShowInstallModal(false)}>
+          <div style={modalStyles.modal} onClick={(e) => e.stopPropagation()}>
+            <button style={modalStyles.closeBtn} onClick={() => setShowInstallModal(false)}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem' }}>
+              <i className="fa-solid fa-download" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+              Install TAF App
+            </h3>
+            <p style={{ margin: '0 0 1rem', color: 'var(--text-light)', fontSize: '0.9rem' }}>
+              Install this app on your device for the best experience — fast loading, offline access, and app-like feel.
+            </p>
+
+            <div style={modalStyles.steps}>
+              <div style={modalStyles.step}>📱 <strong>iPhone (Safari):</strong> Tap the <i className="fa-solid fa-share-from-square"></i> Share button → "Add to Home Screen"</div>
+              <div style={modalStyles.step}>🤖 <strong>Android (Chrome):</strong> Tap the <i className="fa-solid fa-ellipsis-vertical"></i> 3-dot menu → "Install app"</div>
+              <div style={modalStyles.step}>💻 <strong>Desktop (Chrome/Edge):</strong> Click the install icon in the address bar (right side)</div>
+            </div>
+
+            <button style={modalStyles.gotIt} onClick={() => setShowInstallModal(false)}>
+              Got it!
+            </button>
+          </div>
         </div>
       )}
     </nav>
@@ -438,7 +447,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-const installStyles: Record<string, React.CSSProperties> = {
+const navInstallStyles: Record<string, React.CSSProperties> = {
   installBtn: {
     display: 'flex',
     alignItems: 'center',
@@ -451,8 +460,72 @@ const installStyles: Record<string, React.CSSProperties> = {
     border: 'none',
     cursor: 'pointer',
     fontSize: '0.85rem',
-    transition: 'transform 0.2s, background 0.2s',
     flexShrink: 0,
+  },
+};
+
+const modalStyles: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '1rem',
+  },
+  modal: {
+    background: 'var(--bg-elevated)',
+    borderRadius: 16,
+    padding: '1.5rem',
+    maxWidth: 420,
+    width: '100%',
+    position: 'relative' as const,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    border: '1px solid var(--border)',
+  },
+  closeBtn: {
+    position: 'absolute' as const,
+    top: 12,
+    right: 12,
+    background: 'var(--bg-alt)',
+    border: '1px solid var(--border)',
+    borderRadius: '50%',
+    width: 32,
+    height: 32,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    color: 'var(--text-light)',
+  },
+  steps: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.7rem',
+    marginBottom: '1rem',
+  },
+  step: {
+    padding: '0.7rem',
+    background: 'var(--bg-alt)',
+    borderRadius: 10,
+    fontSize: '0.85rem',
+    color: 'var(--text)',
+    lineHeight: 1.4,
+    border: '1px solid var(--border)',
+  },
+  gotIt: {
+    width: '100%',
+    padding: '0.7rem',
+    background: 'var(--primary)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 10,
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
   },
 };
 
