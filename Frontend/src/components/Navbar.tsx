@@ -7,6 +7,9 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
   });
@@ -65,6 +68,43 @@ const Navbar = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
 
+  // PWA install prompt detection
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const ios = /iphone|ipad|ipod/.test(ua.toLowerCase());
+    setIsIOS(ios);
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    const installedHandler = () => setIsInstalled(true);
+    window.addEventListener('appinstalled', installedHandler);
+
+    // Check if already in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        setInstallPrompt(null);
+      }
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -115,6 +155,17 @@ const Navbar = () => {
           <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             <i className={`fa-solid ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
           </button>
+
+          {/* Install PWA button — desktop */}
+          {!isInstalled && (installPrompt || isIOS) && (
+            <button
+              onClick={handleInstall}
+              title={isIOS ? 'Tap Share → Add to Home Screen' : 'Install app on your device'}
+              style={installStyles.installBtn}
+            >
+              <i className="fa-solid fa-download"></i>
+            </button>
+          )}
 
           {user ? (
             <div style={styles.userMenu} ref={dropdownRef}>
@@ -202,6 +253,18 @@ const Navbar = () => {
             <i className={`fa-solid ${theme === 'light' ? 'fa-moon' : 'fa-sun'}`}></i>
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
           </button>
+
+          {/* Install PWA button — mobile */}
+          {!isInstalled && (installPrompt || isIOS) && (
+            <button
+              onClick={handleInstall}
+              className="mobile-btn"
+              title={isIOS ? 'Tap Share → Add to Home Screen' : 'Install app on your device'}
+            >
+              <i className="fa-solid fa-download"></i>
+              Install App
+            </button>
+          )}
 
           {user ? (
             <>
@@ -372,6 +435,24 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dropdownLogout: {
     color: 'var(--error)',
+  },
+};
+
+const installStyles: Record<string, React.CSSProperties> = {
+  installBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: '50%',
+    background: 'var(--accent)',
+    color: '#fff',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+    transition: 'transform 0.2s, background 0.2s',
+    flexShrink: 0,
   },
 };
 
