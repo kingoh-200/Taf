@@ -352,6 +352,9 @@ const UsersManager = () => {
 const SubscribersManager = () => {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addEmail, setAddEmail] = useState('');
+  const [addName, setAddName] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -361,6 +364,19 @@ const SubscribersManager = () => {
       .finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addEmail.trim()) return;
+    setAdding(true);
+    try {
+      await api.post('/admin/subscribers', { email: addEmail.trim(), name: addName.trim() || undefined });
+      setAddEmail('');
+      setAddName('');
+      load();
+    } catch {}
+    setAdding(false);
+  };
 
   const handleRemove = async (id: number) => {
     if (confirm('Remove this subscriber?')) {
@@ -372,27 +388,33 @@ const SubscribersManager = () => {
   if (loading) return <div className="loading"><i className="fa-solid fa-spinner fa-spin"></i> Loading subscribers...</div>;
 
   const activeSubs = subscribers.filter((s) => s.is_active);
-  const removedSubs = subscribers.filter((s) => !s.is_active);
 
   return (
     <div>
+      {/* Add subscriber form */}
+      <form onSubmit={handleAdd} className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ marginBottom: '0.8rem' }}><i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Add Subscriber</h3>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input type="email" placeholder="Email address" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} required style={{ flex: 1, minWidth: 200, padding: '0.55rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }} />
+          <input placeholder="Name (optional)" value={addName} onChange={(e) => setAddName(e.target.value)} style={{ flex: 1, minWidth: 150, padding: '0.55rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }} />
+          <button type="submit" className="btn" disabled={adding || !addEmail.trim()} style={{ whiteSpace: 'nowrap' }}>
+            {adding ? <i className="fa-solid fa-spinner fa-spin"></i> : <><i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>Add</>}
+          </button>
+        </div>
+      </form>
+
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <i className="fa-solid fa-chart-bar" style={{ color: 'var(--primary)' }}></i>
           <span style={{ fontWeight: 600 }}>{activeSubs.length}</span>
           <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>active subscriber(s)</span>
-          {removedSubs.length > 0 && (
-            <span style={{ marginLeft: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              ({removedSubs.length} removed)
-            </span>
-          )}
         </div>
       </div>
 
       {activeSubs.length === 0 ? (
         <p style={{ color: 'var(--text-light)', textAlign: 'center', padding: '2rem' }}>
-          <i className="fa-solid fa-envelope-open" style={{ marginRight: '0.4rem', fontSize: '1.5rem', display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}></i>
-          No subscribers yet. They'll appear here when people sign up on the home page.
+          <i className="fa-solid fa-envelope-open" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}></i>
+          No subscribers yet. Add one above or wait for sign-ups on the home page.
         </p>
       ) : (
         activeSubs.map((sub) => (
@@ -403,9 +425,7 @@ const SubscribersManager = () => {
                 {sub.email}
               </div>
               {sub.name && <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{sub.name}</div>}
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Subscribed {new Date(sub.created_at).toLocaleDateString()}
-              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Subscribed {new Date(sub.created_at).toLocaleDateString()}</div>
             </div>
             <button onClick={() => handleRemove(sub.id)} style={deleteBtnStyle}>
               <i className="fa-solid fa-user-minus" style={{ marginRight: '0.2rem' }}></i>Remove
@@ -426,12 +446,20 @@ const EmailSender = () => {
   const [result, setResult] = useState<{ message: string; recipients: string[] } | null>(null);
   const [error, setError] = useState('');
   const [logs, setLogs] = useState<any[]>([]);
+  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [memberCount, setMemberCount] = useState(0);
 
   useEffect(() => {
-    api.get('/admin/email-logs')
-      .then((res) => setLogs(res.data))
-      .catch(() => {});
+    api.get('/admin/email-logs').then((res) => setLogs(res.data)).catch(() => {});
+    api.get('/admin/subscribers').then((res) => {
+      setSubscriberCount(res.data.filter((s: any) => s.is_active).length);
+    }).catch(() => {});
+    api.get('/admin/users').then((res) => {
+      setMemberCount(res.data.filter((u: any) => u.email && u.is_active).length);
+    }).catch(() => {});
   }, []);
+
+  const recipientCount = target === 'all' ? subscriberCount + memberCount : target === 'subscribers' ? subscriberCount : memberCount;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -465,6 +493,11 @@ const EmailSender = () => {
             <option value="subscribers">Newsletter Subscribers only</option>
             <option value="members">Registered Members only</option>
           </select>
+          <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <i className="fa-solid fa-info-circle" style={{ marginRight: '0.3rem' }}></i>
+            This email will be sent to <strong style={{ color: recipientCount > 0 ? 'var(--primary)' : 'var(--error)' }}>{recipientCount}</strong> recipient(s)
+            {target === 'all' && <span> ({subscriberCount} subscribers + {memberCount} members)</span>}
+          </div>
         </div>
 
         <div className="form-group">
