@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Response } from 'express';
 import db from '../db';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { sendEmail, buildEmailHtml } from '../utils/email';
 
 const router = Router();
 
@@ -183,23 +184,30 @@ router.post('/send-email', authenticate, adminOnly, async (req: AuthRequest, res
       }
     }
 
-    // Log the email (actual sending would require SMTP config — nodemailer, SendGrid, etc.)
-    // For now we log it so admin can see what was sent
+    // Send emails to all recipients
+    const html = buildEmailHtml(subject, body);
+    let sentCount = 0;
+    let failedCount = 0;
+    const htmlForEmail = html;
+
+    for (const recipient of recipients) {
+      const result = await sendEmail({ to: recipient.email, subject, html: htmlForEmail });
+      if (result.success) sentCount++;
+      else failedCount++;
+    }
+
+    const status = failedCount === 0 ? 'sent' : sentCount === 0 ? 'failed' : 'partial';
+
     const [log] = await db('email_logs').insert({
       sent_by: req.user!.id,
       subject,
       body,
       recipient_count: recipients.length,
-      status: recipients.length > 0 ? 'sent' : 'no_recipients',
+      status,
     }).returning('*');
 
-    // In production, you'd loop through recipients and send via SMTP here:
-    // for (const recipient of recipients) {
-    //   await sendEmail(recipient.email, subject, body);
-    // }
-
     res.status(201).json({
-      message: `Email logged. ${recipients.length} recipient(s).`,
+      message: `${sentCount} email(s) sent${failedCount > 0 ? `, ${failedCount} failed` : ''}.`,
       log,
       recipients: recipients.map((r) => r.email),
     });
