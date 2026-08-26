@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import api, { cachedGet } from '../api/client';
+import api from '../api/client';
 import { uploadToCloudinary, isCloudinaryConfigured, isVideoFile } from '../utils/cloudinary';
 import { processImage } from '../utils/imageProcessor';
 import { GalleryItemSkeleton } from '../components/Skeleton';
+import NewItemsBanner from '../components/NewItemsBanner';
+import { useRealtimePolling } from '../hooks/useRealtimePolling';
 
 interface GalleryItem {
   id: number;
@@ -22,8 +24,10 @@ interface GalleryItem {
 }
 
 const Gallery = () => {
-  const [items, setItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: items, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 10000 });
+  const [localItems, setLocalItems] = useState<GalleryItem[]>([]);
+  // Use items from polling, but allow local optimistic updates
+  const allItems = localItems.length > 0 ? localItems : items;
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState('');
@@ -38,16 +42,12 @@ const Gallery = () => {
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
-    loadItems();
   }, []);
 
-  const loadItems = () => {
-    setLoading(true);
-    cachedGet('/gallery').then(({ data, fromCache }) => {
-      setItems(data);
-      if (!fromCache) setLoading(false);
-    }).catch(() => {}).finally(() => setLoading(false));
-  };
+  // Reset local items when polled data updates
+  useEffect(() => {
+    setLocalItems([]);
+  }, [items]);
 
   const loadSaved = () => {
     if (!user) return;
@@ -103,7 +103,7 @@ const Gallery = () => {
         caption: caption || null,
       });
 
-      setItems([res.data, ...items]);
+      setLocalItems([res.data, ...allItems]);
       setSelectedFile(null);
       setPreview('');
       setCaption('');
@@ -119,7 +119,7 @@ const Gallery = () => {
     if (!user) return;
     try {
       const res = await api.post(`/gallery/${item.id}/like`);
-      setItems(items.map((i) =>
+      setLocalItems(allItems.map((i) =>
         i.id === item.id
           ? { ...i, liked: res.data.liked, like_count: res.data.like_count }
           : i
@@ -134,7 +134,7 @@ const Gallery = () => {
     if (!user) return;
     try {
       const res = await api.post(`/gallery/${item.id}/save`);
-      setItems(items.map((i) =>
+      setLocalItems(allItems.map((i) =>
         i.id === item.id
           ? { ...i, saved: res.data.saved, save_count: res.data.save_count }
           : i
@@ -151,13 +151,13 @@ const Gallery = () => {
     if (!confirm('Delete this item?')) return;
     try {
       await api.delete(`/gallery/${item.id}`);
-      setItems(items.filter((i) => i.id !== item.id));
+      setLocalItems(allItems.filter((i) => i.id !== item.id));
       setSavedItems(savedItems.filter((i) => i.id !== item.id));
       setViewItem(null);
     } catch {}
   };
 
-  const displayItems = activeTab === 'all' ? items : savedItems;
+  const displayItems = activeTab === 'all' ? allItems : savedItems;
 
   return (
     <div className="page">
@@ -175,6 +175,11 @@ const Gallery = () => {
       </div>
 
       {error && <div className="alert alert-error"><i className="fa-solid fa-circle-exclamation" style={{ marginRight: '0.4rem' }}></i>{error}</div>}
+
+      {/* New items banner */}
+      <div style={{ marginTop: '0.8rem' }}>
+        <NewItemsBanner count={newCount} onClick={acceptNew} />
+      </div>
 
       {/* Upload form */}
       {showUpload && (

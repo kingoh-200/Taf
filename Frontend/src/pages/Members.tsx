@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { cachedGet } from '../api/client';
+import { useState } from 'react';
 import { MemberCardSkeleton } from '../components/Skeleton';
+import NewItemsBanner from '../components/NewItemsBanner';
+import { useRealtimePolling } from '../hooks/useRealtimePolling';
 
 interface MemberData {
   id: string | number;
@@ -35,16 +36,8 @@ const MembersSkeleton = () => (
 );
 
 const Members = () => {
-  const [members, setMembers] = useState<MemberData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 15000 });
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
-
-  useEffect(() => {
-    cachedGet('/members').then(({ data, fromCache }) => {
-      setMembers(data);
-      if (!fromCache) setLoading(false);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
 
   if (loading) return <MembersSkeleton />;
 
@@ -55,6 +48,10 @@ const Members = () => {
     <div className="page">
       <h1><i className="fa-solid fa-users" style={{ marginRight: '0.5rem' }}></i>Our Team</h1>
       <p>Meet the people who make this club awesome.</p>
+
+      <div style={{ marginTop: '0.5rem' }}>
+        <NewItemsBanner count={newCount} onClick={acceptNew} />
+      </div>
 
       {members.length === 0 ? (
         <p><i className="fa-solid fa-user-slash" style={{ marginRight: '0.3rem' }}></i>No members to display yet.</p>

@@ -1,18 +1,10 @@
-import { useState, useEffect } from 'react';
-import { cachedGet } from '../api/client';
 import type { Event } from '../api/types';
 import { EventCardSkeleton } from '../components/Skeleton';
+import NewItemsBanner from '../components/NewItemsBanner';
+import { useRealtimePolling } from '../hooks/useRealtimePolling';
 
 const Events = () => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    cachedGet('/events').then(({ data, fromCache }) => {
-      setEvents(data);
-      if (!fromCache) setLoading(false);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const { data: events, loading, newCount, acceptNew } = useRealtimePolling<Event[]>('/events', [], { interval: 15000 });
 
   if (loading) return (
     <div className="page">
@@ -28,6 +20,10 @@ const Events = () => {
     <div className="page">
       <h1><i className="fa-solid fa-calendar-days" style={{ marginRight: '0.5rem' }}></i>Events</h1>
       <p>Check out what we've been up to and what's coming next.</p>
+
+      <div style={{ marginTop: '0.5rem' }}>
+        <NewItemsBanner count={newCount} onClick={acceptNew} />
+      </div>
 
       {events.length === 0 ? (
         <p><i className="fa-solid fa-calendar-xmark" style={{ marginRight: '0.3rem' }}></i>No events yet. Check back soon!</p>
