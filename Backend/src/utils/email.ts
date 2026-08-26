@@ -1,14 +1,16 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 interface SendEmailOptions {
   to: string;
@@ -23,6 +25,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   }
 
   try {
+    const transporter = getTransporter();
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || `Teens Aloud Foundation <${process.env.SMTP_USER}>`,
       to,
@@ -32,8 +35,8 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
     console.log('✉️ Email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
-    console.error('✉️ Email send error:', error.message);
-    return { success: false, error: error.message };
+    console.error('✉️ Email send error:', error.message, error.code);
+    return { success: false, error: error.message || 'Unknown email error' };
   }
 }
 
