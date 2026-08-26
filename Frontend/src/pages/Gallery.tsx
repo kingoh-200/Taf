@@ -24,10 +24,13 @@ interface GalleryItem {
 }
 
 const Gallery = () => {
-  const { data: items, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 10000 });
-  const [localItems, setLocalItems] = useState<GalleryItem[]>([]);
-  // Use items from polling, but allow local optimistic updates
-  const allItems = localItems.length > 0 ? localItems : items;
+  const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 10000 });
+  const [optimisticItems, setOptimisticItems] = useState<Map<number, Partial<GalleryItem>>>(new Map());
+  // Merge polled data with optimistic local updates
+  const items = polledItems.map((item) => {
+    const optimistic = optimisticItems.get(item.id);
+    return optimistic ? { ...item, ...optimistic } : item;
+  });
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState('');
@@ -44,10 +47,24 @@ const Gallery = () => {
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
-  // Reset local items when polled data updates
+  // Clear optimistic updates when polled data catches up
   useEffect(() => {
-    setLocalItems([]);
-  }, [items]);
+    setOptimisticItems((prev) => {
+      const next = new Map(prev);
+      for (const item of polledItems) {
+        const optimistic = next.get(item.id);
+        if (optimistic) {
+          // Check if polled data now matches or exceeds our optimistic update
+          if (optimistic.like_count !== undefined && item.like_count >= optimistic.like_count) {
+            next.delete(item.id);
+          } else if (optimistic.saved !== undefined && item.saved === optimistic.saved) {
+            next.delete(item.id);
+          }
+        }
+      }
+      return next;
+    });
+  }, [polledItems]);
 
   const loadSaved = () => {
     if (!user) return;
@@ -103,7 +120,12 @@ const Gallery = () => {
         caption: caption || null,
       });
 
-      setLocalItems([res.data, ...allItems]);
+      // Add new item optimistically at the top
+      setOptimisticItems((prev) => {
+        const next = new Map(prev);
+        next.set(res.data.id, res.data);
+        return next;
+      });
       setSelectedFile(null);
       setPreview('');
       setCaption('');
@@ -117,13 +139,23 @@ const Gallery = () => {
 
   const handleLike = async (item: GalleryItem) => {
     if (!user) return;
+    // Optimistic update — show immediately
+    setOptimisticItems((prev) => {
+      const next = new Map(prev);
+      next.set(item.id, {
+        liked: !item.liked,
+        like_count: item.liked ? item.like_count - 1 : item.like_count + 1,
+      });
+      return next;
+    });
     try {
       const res = await api.post(`/gallery/${item.id}/like`);
-      setLocalItems(allItems.map((i) =>
-        i.id === item.id
-          ? { ...i, liked: res.data.liked, like_count: res.data.like_count }
-          : i
-      ));
+      // Server confirmed — update with real values
+      setOptimisticItems((prev) => {
+        const next = new Map(prev);
+        next.set(item.id, { liked: res.data.liked, like_count: res.data.like_count });
+        return next;
+      });
       if (viewItem?.id === item.id) {
         setViewItem({ ...viewItem, liked: res.data.liked, like_count: res.data.like_count });
       }
@@ -132,13 +164,22 @@ const Gallery = () => {
 
   const handleSave = async (item: GalleryItem) => {
     if (!user) return;
+    // Optimistic update — show immediately
+    setOptimisticItems((prev) => {
+      const next = new Map(prev);
+      next.set(item.id, {
+        saved: !item.saved,
+        save_count: item.saved ? item.save_count - 1 : item.save_count + 1,
+      });
+      return next;
+    });
     try {
       const res = await api.post(`/gallery/${item.id}/save`);
-      setLocalItems(allItems.map((i) =>
-        i.id === item.id
-          ? { ...i, saved: res.data.saved, save_count: res.data.save_count }
-          : i
-      ));
+      setOptimisticItems((prev) => {
+        const next = new Map(prev);
+        next.set(item.id, { saved: res.data.saved, save_count: res.data.save_count });
+        return next;
+      });
       if (viewItem?.id === item.id) {
         setViewItem({ ...viewItem, saved: res.data.saved, save_count: res.data.save_count });
       }
@@ -151,13 +192,17 @@ const Gallery = () => {
     if (!confirm('Delete this item?')) return;
     try {
       await api.delete(`/gallery/${item.id}`);
-      setLocalItems(allItems.filter((i) => i.id !== item.id));
+      setOptimisticItems((prev) => {
+        const next = new Map(prev);
+        next.set(item.id, { ...item, deleted: true } as any);
+        return next;
+      });
       setSavedItems(savedItems.filter((i) => i.id !== item.id));
       setViewItem(null);
     } catch {}
   };
 
-  const displayItems = activeTab === 'all' ? allItems : savedItems;
+  const displayItems = activeTab === 'all' ? items : savedItems;
 
   return (
     <div className="page">
