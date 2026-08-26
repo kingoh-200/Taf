@@ -10,6 +10,7 @@ import { announcementRoutes } from './routes/announcements';
 import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
 import { galleryRoutes } from './routes/gallery';
+import { adminRoutes } from './routes/admin';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -32,6 +33,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -133,6 +135,27 @@ async function initializeDatabase() {
         item_id INTEGER REFERENCES gallery_items(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, item_id)
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        name VARCHAR(255),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id SERIAL PRIMARY KEY,
+        sent_by INTEGER REFERENCES users(id),
+        subject VARCHAR(500) NOT NULL,
+        body TEXT NOT NULL,
+        recipient_count INTEGER DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'sent',
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
     console.log('✅ Tables created/verified');

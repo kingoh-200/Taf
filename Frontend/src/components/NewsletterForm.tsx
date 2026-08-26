@@ -1,30 +1,34 @@
 import { useState } from 'react';
+import api from '../api/client';
 
 const NewsletterForm = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setStatus('error');
+      setMessage('Please enter a valid email.');
       return;
     }
-    // Store locally (could connect to a real API later)
-    const subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-      localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+    try {
+      const res = await api.post('/admin/subscribers', { email });
+      setStatus('success');
+      setMessage(res.data.message || 'Subscribed successfully!');
+      setEmail('');
+    } catch (err: any) {
+      setStatus('error');
+      setMessage(err?.response?.data?.error || 'Failed to subscribe. Try again.');
     }
-    setStatus('success');
-    setEmail('');
   };
 
   if (status === 'success') {
     return (
       <div style={{ padding: '0.8rem', background: 'rgba(22, 163, 74, 0.1)', borderRadius: 8, border: '1px solid rgba(22, 163, 74, 0.3)' }}>
         <i className="fa-solid fa-check-circle" style={{ color: 'var(--success)', marginRight: '0.4rem' }}></i>
-        <span style={{ color: 'var(--success)', fontWeight: 500 }}>You're subscribed! Welcome to the community.</span>
+        <span style={{ color: 'var(--success)', fontWeight: 500 }}>{message || "You're subscribed! Welcome to the community."}</span>
       </div>
     );
   }
