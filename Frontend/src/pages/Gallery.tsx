@@ -87,9 +87,15 @@ const Gallery = () => {
       .catch(() => {});
   };
 
+  // Load saved items eagerly so the count is always accurate
   useEffect(() => {
-    if (user && activeTab === 'saved') loadSaved();
-  }, [user, activeTab]);
+    if (user) loadSaved();
+  }, [user]);
+
+  // Also refresh saved list after any save/unsave action
+  const refreshSaved = () => {
+    if (user) loadSaved();
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -197,8 +203,8 @@ const Gallery = () => {
       if (viewItem?.id === item.id) {
         setViewItem({ ...viewItem, saved: res.data.saved, save_count: res.data.save_count });
       }
-      // Refresh saved list if on saved tab
-      if (activeTab === 'saved') loadSaved();
+      // Always refresh saved count
+      refreshSaved();
     } catch {}
   };
 
