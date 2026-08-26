@@ -25,21 +25,24 @@ const Home = () => {
     // Fire all3 requests independently — each section resolves on its own
     cachedGet('/events')
       .then((res) => {
-        setEvents((res.data as any).data?.slice(0, 3) || []);
+        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+        setEvents(items.slice(0, 3));
       })
       .catch(() => {})
       .finally(() => setEventsLoading(false));
 
     cachedGet('/announcements')
       .then((res) => {
-        setAnnouncements((res.data as any).data?.slice(0, 3) || []);
+        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+        setAnnouncements(items.slice(0, 3));
       })
       .catch(() => {})
       .finally(() => setAnnouncementsLoading(false));
 
     cachedGet('/members')
       .then((res) => {
-        setMemberCount((res.data as any).data?.length || 0);
+        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+        setMemberCount(items.length);
       })
       .catch(() => {})
       .finally(() => setMembersLoading(false));
