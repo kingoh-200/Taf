@@ -98,7 +98,7 @@ const Members = () => {
         {/* Stats */}
         <div style={s.statsRow}>
           <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: '#e0f4fc', color: 'var(--primary)' }}>
+            <div style={{ ...s.statIcon, background: 'var(--member-bg)', color: 'var(--primary)' }}>
               <i className="fa-solid fa-users"></i>
             </div>
             <div>
@@ -107,7 +107,7 @@ const Members = () => {
             </div>
           </div>
           <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: '#fef3c7', color: '#F7941D' }}>
+            <div style={{ ...s.statIcon, background: 'var(--admin-bg)', color: 'var(--accent)' }}>
               <i className="fa-solid fa-crown"></i>
             </div>
             <div>
@@ -116,7 +116,7 @@ const Members = () => {
             </div>
           </div>
           <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: '#dcfce7', color: '#16a34a' }}>
+            <div style={{ ...s.statIcon, background: 'rgba(22,163,74,0.15)', color: 'var(--success)' }}>
               <i className="fa-solid fa-circle-check"></i>
             </div>
             <div>
@@ -192,9 +192,9 @@ const Members = () => {
             <section style={s.section}>
               <div style={s.sectionHeader}>
                 <div style={s.sectionTitleRow}>
-                  <i className="fa-solid fa-crown" style={{ color: '#F7941D', fontSize: '1.1rem' }}></i>
+                  <i className="fa-solid fa-crown" style={{ color: 'var(--accent)', fontSize: '1.1rem' }}></i>
                   <h2 style={s.sectionTitle}>Administrators</h2>
-                  <span style={{ ...s.countBadge, background: '#fef3c7', color: '#92400e' }}>{filteredAdmins.length}</span>
+                  <span style={{ ...s.countBadge, background: 'var(--admin-bg)', color: 'var(--admin-text)' }}>{filteredAdmins.length}</span>
                 </div>
                 <div style={s.sectionDividerOrange}></div>
               </div>
@@ -213,7 +213,7 @@ const Members = () => {
                 <div style={s.sectionTitleRow}>
                   <i className="fa-solid fa-users" style={{ color: 'var(--primary)', fontSize: '1.1rem' }}></i>
                   <h2 style={s.sectionTitle}>Members</h2>
-                  <span style={{ ...s.countBadge, background: '#e0f4fc', color: '#0077A8' }}>{filteredRegular.length}</span>
+                  <span style={{ ...s.countBadge, background: 'var(--member-bg)', color: 'var(--member-text)' }}>{filteredRegular.length}</span>
                 </div>
                 <div style={s.sectionDividerBlue}></div>
               </div>
@@ -280,8 +280,8 @@ const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberDa
         <div style={{
           ...s.cardAvatar,
           background: isAdmin
-            ? 'linear-gradient(135deg, #F7941D, #E07E10)'
-            : 'linear-gradient(135deg, var(--primary), var(--primary-dark, #0089BB))',
+            ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))'
+            : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         }}>
           {member.image_url ? (
             <img src={member.image_url} alt={member.name} style={s.cardImg} />
@@ -300,8 +300,8 @@ const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberDa
           <h3 style={s.cardName}>{member.name}</h3>
           <span style={{
             ...s.roleTag,
-            background: isAdmin ? '#fef3c7' : '#e0f4fc',
-            color: isAdmin ? '#92400e' : '#0077A8',
+            background: isAdmin ? 'var(--admin-bg)' : 'var(--member-bg)',
+            color: isAdmin ? 'var(--admin-text)' : 'var(--member-text)',
           }}>
             <i className={`fa-solid ${isAdmin ? 'fa-crown' : 'fa-id-badge'}`} style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
             {isAdmin ? 'Founder' : 'Member'}
@@ -348,8 +348,8 @@ const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberDa
       {/* Footer: Status + Joined */}
       <div style={s.cardFooter}>
         <div style={s.statusRow}>
-          <span style={{ ...s.statusDot, background: member.is_active !== false ? '#16a34a' : '#94a3b8' }}></span>
-          <span style={{ fontSize: '0.8rem', color: member.is_active !== false ? '#16a34a' : '#94a3b8' }}>
+          <span style={{ ...s.statusDot, background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
+          <span style={{ fontSize: '0.8rem', color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>
             {member.is_active !== false ? 'Active' : 'Inactive'}
           </span>
         </div>
@@ -385,7 +385,7 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
     <div style={{ textAlign: 'center' }}>
       <div style={{
         width: 100, height: 100, borderRadius: '50%', margin: '0 auto 1rem',
-        background: isAdmin ? 'linear-gradient(135deg, #F7941D, #E07E10)' : 'linear-gradient(135deg, var(--primary), #0089BB)',
+        background: isAdmin ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))' : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
       }}>
         {member.image_url ? (
@@ -397,8 +397,8 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
       <h2 style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>{member.name}</h2>
       <span style={{
         ...s.roleTag,
-        background: isAdmin ? '#fef3c7' : '#e0f4fc',
-        color: isAdmin ? '#92400e' : '#0077A8',
+        background: isAdmin ? 'var(--admin-bg)' : 'var(--member-bg)',
+        color: isAdmin ? 'var(--admin-text)' : 'var(--member-text)',
         marginBottom: '1rem', display: 'inline-flex',
       }}>
         <i className={`fa-solid ${isAdmin ? 'fa-crown' : 'fa-id-badge'}`} style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
@@ -448,8 +448,8 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border, #e2e8f0)' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-          <span style={{ ...s.statusDot, background: member.is_active !== false ? '#16a34a' : '#94a3b8' }}></span>
-          <span style={{ color: member.is_active !== false ? '#16a34a' : '#94a3b8' }}>{member.is_active !== false ? 'Active' : 'Inactive'}</span>
+          <span style={{ ...s.statusDot, background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
+          <span style={{ color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>{member.is_active !== false ? 'Active' : 'Inactive'}</span>
         </span>
         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
           <i className="fa-solid fa-calendar" style={{ marginRight: '0.3rem' }}></i>
@@ -469,11 +469,11 @@ const s: Record<string, React.CSSProperties> = {
 
   // Hero
   hero: {
-    background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 50%, #fff7ed 100%)',
+    background: 'var(--hero-bg)',
     borderRadius: 16,
     padding: '2rem',
     marginBottom: '1.5rem',
-    border: '1px solid var(--border, #e2e8f0)',
+    border: '1px solid var(--border)',
   },
   heroContent: {
     display: 'flex',
@@ -486,12 +486,12 @@ const s: Record<string, React.CSSProperties> = {
   heroTitle: {
     fontSize: '1.8rem',
     fontWeight: 700,
-    color: 'var(--text, #1e293b)',
+    color: 'var(--text)',
     marginBottom: '0.5rem',
   },
   heroSubtitle: {
     fontSize: '0.95rem',
-    color: 'var(--text-light, #64748b)',
+    color: 'var(--text-light)',
     lineHeight: 1.6,
   },
   heroIllustration: {
@@ -506,10 +506,10 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.8rem',
-    background: '#fff',
+    background: 'var(--card-bg)',
     borderRadius: 12,
     padding: '1rem',
-    border: '1px solid var(--border, #e2e8f0)',
+    border: '1px solid var(--border)',
   },
   statIcon: {
     width: 44,
@@ -523,12 +523,12 @@ const s: Record<string, React.CSSProperties> = {
   statNumber: {
     fontSize: '1.5rem',
     fontWeight: 700,
-    color: 'var(--text, #1e293b)',
+    color: 'var(--text)',
     lineHeight: 1,
   },
   statLabel: {
     fontSize: '0.8rem',
-    color: 'var(--text-light, #64748b)',
+    color: 'var(--text-light)',
   },
 
   // Filters
@@ -557,9 +557,9 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     padding: '0.6rem 0.8rem 0.6rem 2.4rem',
     borderRadius: 10,
-    border: '1px solid var(--border, #e2e8f0)',
-    background: 'var(--input-bg, #fff)',
-    color: 'var(--text, #1e293b)',
+    border: '1px solid var(--border)',
+    background: 'var(--input-bg)',
+    color: 'var(--text)',
     fontSize: '0.88rem',
     outline: 'none',
     boxSizing: 'border-box' as const,
@@ -577,16 +577,16 @@ const s: Record<string, React.CSSProperties> = {
   filterIcon: {
     position: 'absolute' as const,
     left: 10,
-    color: 'var(--text-muted, #94a3b8)',
+    color: 'var(--text-muted)',
     fontSize: '0.75rem',
     pointerEvents: 'none' as const,
   },
   select: {
     padding: '0.6rem 0.7rem 0.6rem 2rem',
     borderRadius: 10,
-    border: '1px solid var(--border, #e2e8f0)',
-    background: 'var(--input-bg, #fff)',
-    color: 'var(--text, #1e293b)',
+    border: '1px solid var(--border)',
+    background: 'var(--input-bg)',
+    color: 'var(--text)',
     fontSize: '0.85rem',
     cursor: 'pointer',
     appearance: 'auto' as const,
@@ -608,7 +608,7 @@ const s: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '1.15rem',
     fontWeight: 700,
-    color: 'var(--text, #1e293b)',
+    color: 'var(--text)',
   },
   countBadge: {
     display: 'inline-flex',
@@ -623,7 +623,7 @@ const s: Record<string, React.CSSProperties> = {
   sectionDividerOrange: {
     height: 3,
     borderRadius: 2,
-    background: 'linear-gradient(90deg, #F7941D, transparent)',
+    background: 'linear-gradient(90deg, var(--accent), transparent)',
   },
   sectionDividerBlue: {
     height: 3,
@@ -640,10 +640,10 @@ const s: Record<string, React.CSSProperties> = {
 
   // Team card
   teamCard: {
-    background: 'var(--card-bg, #fff)',
+    background: 'var(--card-bg)',
     borderRadius: 14,
     padding: '1.2rem',
-    border: '1px solid var(--border, #e2e8f0)',
+    border: '1px solid var(--border)',
     transition: 'box-shadow 0.2s, transform 0.2s',
     display: 'flex',
     flexDirection: 'column' as const,
@@ -682,7 +682,7 @@ const s: Record<string, React.CSSProperties> = {
     width: 18,
     height: 18,
     borderRadius: '50%',
-    background: '#F7941D',
+    background: 'var(--accent)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -691,7 +691,7 @@ const s: Record<string, React.CSSProperties> = {
   cardName: {
     fontSize: '1rem',
     fontWeight: 600,
-    color: 'var(--text, #1e293b)',
+    color: 'var(--text)',
     marginBottom: '0.2rem',
   },
   roleTag: {
@@ -710,18 +710,18 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.4rem',
     fontSize: '0.82rem',
-    color: 'var(--text-light, #64748b)',
+    color: 'var(--text-light)',
     marginBottom: '0.2rem',
   },
   detailIcon: {
     fontSize: '0.75rem',
-    color: 'var(--primary, #00A0DC)',
+    color: 'var(--primary)',
     width: 14,
     textAlign: 'center' as const,
   },
   cardBio: {
     fontSize: '0.82rem',
-    color: 'var(--text-light, #64748b)',
+    color: 'var(--text-light)',
     lineHeight: 1.5,
     marginBottom: '0.5rem',
   },
@@ -737,16 +737,16 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     fontSize: '0.72rem',
     fontWeight: 500,
-    background: 'var(--bg-alt, #f8fafc)',
-    color: 'var(--primary, #00A0DC)',
-    border: '1px solid var(--border, #e2e8f0)',
+    background: 'var(--bg-alt)',
+    color: 'var(--primary)',
+    border: '1px solid var(--border)',
   },
   cardFooter: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: '0.5rem',
-    borderTop: '1px solid var(--border-light, #f1f5f9)',
+    borderTop: '1px solid var(--border-light)',
     marginTop: '0.3rem',
   },
   statusRow: {
@@ -762,7 +762,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   joinedDate: {
     fontSize: '0.78rem',
-    color: 'var(--text-muted, #94a3b8)',
+    color: 'var(--text-muted)',
   },
   cardActions: {
     display: 'flex',
@@ -770,7 +770,7 @@ const s: Record<string, React.CSSProperties> = {
     gap: '0.6rem',
     marginTop: '0.6rem',
     paddingTop: '0.5rem',
-    borderTop: '1px solid var(--border-light, #f1f5f9)',
+    borderTop: '1px solid var(--border-light)',
   },
   emailIcon: {
     width: 32,
@@ -779,8 +779,8 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'var(--bg-alt, #f8fafc)',
-    color: 'var(--text-light, #64748b)',
+    background: 'var(--bg-alt)',
+    color: 'var(--text-light)',
     textDecoration: 'none',
     fontSize: '0.82rem',
   },
@@ -788,9 +788,9 @@ const s: Record<string, React.CSSProperties> = {
     marginLeft: 'auto',
     padding: '0.35rem 0.9rem',
     borderRadius: 18,
-    border: '1px solid var(--primary, #00A0DC)',
+    border: '1px solid var(--primary)',
     background: 'transparent',
-    color: 'var(--primary, #00A0DC)',
+    color: 'var(--primary)',
     fontSize: '0.78rem',
     fontWeight: 600,
     cursor: 'pointer',
@@ -801,11 +801,11 @@ const s: Record<string, React.CSSProperties> = {
 
   // CTA
   ctaBanner: {
-    background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%)',
+    background: 'var(--bg-alt)',
     borderRadius: 16,
     padding: '1.5rem 2rem',
     marginTop: '1rem',
-    border: '1px solid var(--border, #e2e8f0)',
+    border: '1px solid var(--border)',
   },
   ctaContent: {
     display: 'flex',
@@ -816,18 +816,18 @@ const s: Record<string, React.CSSProperties> = {
   ctaTitle: {
     fontSize: '1.1rem',
     fontWeight: 700,
-    color: 'var(--text, #1e293b)',
+    color: 'var(--text)',
     marginBottom: '0.2rem',
   },
   ctaSubtitle: {
     fontSize: '0.88rem',
-    color: 'var(--text-light, #64748b)',
+    color: 'var(--text-light)',
   },
   ctaBtn: {
     padding: '0.6rem 1.5rem',
     borderRadius: 25,
     border: 'none',
-    background: 'linear-gradient(135deg, var(--primary, #00A0DC), var(--primary-dark, #0089BB))',
+    background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
     color: '#fff',
     fontSize: '0.9rem',
     fontWeight: 600,
@@ -849,7 +849,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '0.5rem',
   },
   modal: {
-    background: 'var(--card-bg, #fff)',
+    background: 'var(--card-bg)',
     borderRadius: 16,
     padding: 'clamp(1rem, 3vw, 2rem)',
     maxWidth: 480,
@@ -864,8 +864,8 @@ const s: Record<string, React.CSSProperties> = {
     width: 32, height: 32,
     borderRadius: '50%',
     border: 'none',
-    background: 'var(--bg-alt, #f1f5f9)',
-    color: 'var(--text-light, #64748b)',
+    background: 'var(--bg-alt)',
+    color: 'var(--text-light)',
     fontSize: '1rem',
     cursor: 'pointer',
     display: 'flex',

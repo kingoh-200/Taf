@@ -25,6 +25,9 @@
   --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
   --input-bg: #ffffff;
   --card-hover-shadow: 0 4px 12px rgba(0, 160, 220, 0.1);
+  --card-bg: #ffffff;
+  --hero-bg: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 50%, #fff7ed 100%);
+  --hero-bg-dark: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
 }
 
 /* ===== DARK THEME ===== */
@@ -52,6 +55,9 @@
   --shadow-lg: 0 4px 20px rgba(0,0,0,0.3);
   --input-bg: #0f172a;
   --card-hover-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+  --card-bg: #1e293b;
+  --hero-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+  --hero-bg-dark: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
 }
 
 * {

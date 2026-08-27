@@ -17,7 +17,7 @@ import NewsletterForm from '../components/NewsletterForm';
 
 const MINISTRIES = [
   { icon: 'fa-heart', name: 'Love Fellowship', desc: 'Bringing young people together to spur themselves unto love and good works.', color: '#ef4444' },
-  { icon: 'fa-campground', name: 'Camp Vista', desc: 'Camps for re-igniting passions and building strong social networks.', color: '#16a34a' },
+  { icon: 'fa-campground', name: 'Camp Vista', desc: 'Camps for re-igniting passions and building strong social networks.', color: 'var(--success)' },
   { icon: 'fa-couch', name: 'Sermon On The Sofa', desc: 'Mixed-bag evangelistic events in secondary schools.', color: '#8b5cf6' },
   { icon: 'fa-futbol', name: 'Sportstronic', desc: 'Reaching young people through sports, games, and experiential learning.', color: '#f59e0b' },
 ];
@@ -107,9 +107,9 @@ const Home = () => {
                 <span style={s.statNum}>{eventsLoading ? '—' : events.length}</span>
                 <span style={s.statLabel}>Upcoming Events</span>
               </Link>
-              <Link to="/members" style={{ ...s.statCard, borderColor: '#16a34a' }}>
+              <Link to="/members" style={{ ...s.statCard, borderColor: 'var(--success)' }}>
                 <div style={{ ...s.statIcon, background: 'rgba(22,163,74,0.1)' }}>
-                  <i className="fa-solid fa-users" style={{ color: '#16a34a' }}></i>
+                  <i className="fa-solid fa-users" style={{ color: 'var(--success)' }}></i>
                 </div>
                 <span style={s.statNum}>{membersLoading ? '—' : memberCount}</span>
                 <span style={s.statLabel}>Members</span>
@@ -282,7 +282,7 @@ const Home = () => {
       <section style={s.section}>
         <div style={s.sectionHead}>
           <h2 style={s.sectionTitle}>
-            <i className="fa-solid fa-seedling" style={{ marginRight: '0.5rem', color: '#16a34a' }}></i>
+            <i className="fa-solid fa-seedling" style={{ marginRight: '0.5rem', color: 'var(--success)' }}></i>
             Our Ministries
           </h2>
           <Link to="/ministries" style={s.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.3rem', fontSize: '0.75rem' }}></i></Link>
@@ -331,7 +331,7 @@ const Home = () => {
                 <i className="fa-solid fa-globe" style={{ color: 'var(--accent)' }}></i>
               </Link>
               <Link to="/ministries" style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.1)', textDecoration: 'none' }}>
-                <i className="fa-solid fa-book-open" style={{ color: '#16a34a' }}></i>
+                <i className="fa-solid fa-book-open" style={{ color: 'var(--success)' }}></i>
               </Link>
               <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.1)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-hand-holding-heart" style={{ color: '#8b5cf6' }}></i>
@@ -548,7 +548,7 @@ const s: Record<string, React.CSSProperties> = {
 
   /* ─── HERO (Logged Out) ─── */
   heroLoggedOut: {
-    background: 'linear-gradient(135deg, #0077B6 0%, #00A0DC 50%, #F7941D 100%)',
+    background: 'linear-gradient(135deg, #0077B6 0%, #00A0DC 50%, var(--accent) 100%)',
     padding: '3rem 1.5rem 2rem',
     textAlign: 'center',
   },
