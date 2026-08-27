@@ -101,29 +101,29 @@ const Home = () => {
             {/* Quick stat cards */}
             <div style={s.statGrid}>
               <Link to="/events" style={{ ...s.statCard, borderColor: 'var(--primary)' }}>
-                <div style={{ ...s.statIcon, background: 'rgba(0,160,220,0.1)' }}>
-                  <i className="fa-solid fa-calendar-days" style={{ color: 'var(--primary)' }}></i>
+                <div style={{ ...s.statIcon, background: 'rgba(255,255,255,0.25)' }}>
+                  <i className="fa-solid fa-calendar-days" style={{ color: '#fff' }}></i>
                 </div>
                 <span style={s.statNum}>{eventsLoading ? '—' : events.length}</span>
                 <span style={s.statLabel}>Upcoming Events</span>
               </Link>
               <Link to="/members" style={{ ...s.statCard, borderColor: 'var(--success)' }}>
-                <div style={{ ...s.statIcon, background: 'rgba(22,163,74,0.1)' }}>
-                  <i className="fa-solid fa-users" style={{ color: 'var(--success)' }}></i>
+                <div style={{ ...s.statIcon, background: 'rgba(255,255,255,0.25)' }}>
+                  <i className="fa-solid fa-users" style={{ color: '#fff' }}></i>
                 </div>
                 <span style={s.statNum}>{membersLoading ? '—' : memberCount}</span>
                 <span style={s.statLabel}>Members</span>
               </Link>
               <Link to="/events" style={{ ...s.statCard, borderColor: 'var(--accent)' }}>
-                <div style={{ ...s.statIcon, background: 'rgba(247,148,29,0.1)' }}>
-                  <i className="fa-solid fa-bullhorn" style={{ color: 'var(--accent)' }}></i>
+                <div style={{ ...s.statIcon, background: 'rgba(255,255,255,0.25)' }}>
+                  <i className="fa-solid fa-bullhorn" style={{ color: '#fff' }}></i>
                 </div>
                 <span style={s.statNum}>{announcementsLoading ? '—' : announcements.length}</span>
                 <span style={s.statLabel}>Announcements</span>
               </Link>
               <Link to="/ministries" style={{ ...s.statCard, borderColor: '#8b5cf6' }}>
-                <div style={{ ...s.statIcon, background: 'rgba(139,92,246,0.1)' }}>
-                  <i className="fa-solid fa-church" style={{ color: '#8b5cf6' }}></i>
+                <div style={{ ...s.statIcon, background: 'rgba(255,255,255,0.25)' }}>
+                  <i className="fa-solid fa-church" style={{ color: '#fff' }}></i>
                 </div>
                 <span style={s.statNum}>4</span>
                 <span style={s.statLabel}>Ministries</span>
@@ -324,16 +324,16 @@ const Home = () => {
           </div>
           <div style={s.aboutVisual}>
             <div style={s.aboutIconGrid}>
-              <Link to="/members" style={{ ...s.aboutIcon, background: 'rgba(0,160,220,0.1)', textDecoration: 'none' }}>
+              <Link to="/members" style={{ ...s.aboutIcon, background: 'rgba(0,160,220,0.15)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-users" style={{ color: 'var(--primary)' }}></i>
               </Link>
-              <Link to="/about" style={{ ...s.aboutIcon, background: 'rgba(247,148,29,0.1)', textDecoration: 'none' }}>
+              <Link to="/about" style={{ ...s.aboutIcon, background: 'rgba(247,148,29,0.15)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-globe" style={{ color: 'var(--accent)' }}></i>
               </Link>
-              <Link to="/ministries" style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.1)', textDecoration: 'none' }}>
+              <Link to="/ministries" style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.15)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-book-open" style={{ color: 'var(--success)' }}></i>
               </Link>
-              <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.1)', textDecoration: 'none' }}>
+              <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.15)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-hand-holding-heart" style={{ color: '#8b5cf6' }}></i>
               </Link>
             </div>
@@ -685,7 +685,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '0.7rem',
     fontWeight: 600,
     color: 'var(--accent)',
-    background: 'rgba(247,148,29,0.1)',
+    background: 'rgba(247,148,29,0.15)',
     padding: '0.2rem 0.5rem',
     borderRadius: 6,
     marginBottom: '0.5rem',
