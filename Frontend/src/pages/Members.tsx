@@ -4,7 +4,6 @@ import NewItemsBanner from '../components/NewItemsBanner';
 import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/client';
 
 interface MemberData {
   id: string | number;
@@ -66,16 +65,6 @@ const Members = () => {
       return a.name.localeCompare(b.name);
     });
   }, [members, search, filterRole, filterDepartment, filterStatus, sortBy]);
-
-  const handlePromote = async (id: string | number, newRole: string) => {
-    try {
-      await api.put(`/admin/users/${id}/role`, { role: newRole });
-      // Refresh members list
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to update role:', err);
-    }
-  };
 
   if (loading) return <MembersSkeleton />;
 
@@ -199,7 +188,7 @@ const Members = () => {
               </div>
               <div style={s.cardGrid}>
                 {filteredMembers.map((member) => (
-                  <TeamCard key={member.id} member={member} onView={setSelectedMember} onPromote={user?.role === 'admin' ? handlePromote : undefined} currentUserId={user?.id} />
+                  <TeamCard key={member.id} member={member} onView={setSelectedMember} />
                 ))}
               </div>
             </section>
@@ -238,25 +227,6 @@ const Members = () => {
               <i className="fa-solid fa-xmark"></i>
             </button>
             <MemberDetail member={selectedMember} />
-            {user?.role === 'admin' && Number(selectedMember.id) !== user?.id && (
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button
-                  onClick={() => {
-                    const newRole = selectedMember.role === 'admin' ? 'member' : 'admin';
-                    handlePromote(selectedMember.id, newRole);
-                    setSelectedMember(null);
-                  }}
-                  style={{
-                    padding: '0.5rem 1.2rem', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-                    background: selectedMember.role === 'admin' ? 'rgba(220,38,38,0.1)' : 'rgba(22,163,74,0.1)',
-                    color: selectedMember.role === 'admin' ? 'var(--error)' : 'var(--success)',
-                  }}
-                >
-                  <i className={`fa-solid ${selectedMember.role === 'admin' ? 'fa-arrow-down' : 'fa-arrow-up'}`} style={{ marginRight: '0.3rem' }}></i>
-                  {selectedMember.role === 'admin' ? 'Demote to Member' : 'Promote to Admin'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -264,8 +234,7 @@ const Members = () => {
   );
 };
 
-const TeamCard = ({ member, onView, onPromote, currentUserId }: { member: MemberData; onView: (m: MemberData) => void; onPromote?: (id: string | number, newRole: string) => void; currentUserId?: number | null }) => {
-  const isAdmin = member.role === 'admin';
+const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberData) => void }) => {
   const initials = member.name
     ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -357,21 +326,6 @@ const TeamCard = ({ member, onView, onPromote, currentUserId }: { member: Member
           <a href={`mailto:${member.email}`} style={s.emailIcon} title="Send email">
             <i className="fa-solid fa-envelope"></i>
           </a>
-        )}
-        {onPromote && currentUserId && Number(member.id) !== currentUserId && (
-          <button
-            onClick={() => onPromote(member.id, isAdmin ? 'member' : 'admin')}
-            style={{
-              padding: '0.4rem 0.7rem', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
-              background: isAdmin ? 'rgba(220,38,38,0.1)' : 'rgba(22,163,74,0.1)',
-              color: isAdmin ? 'var(--error)' : 'var(--success)',
-              transition: 'all 0.2s',
-            }}
-            title={isAdmin ? 'Demote to Member' : 'Promote to Admin'}
-          >
-            <i className={`fa-solid ${isAdmin ? 'fa-arrow-down' : 'fa-arrow-up'}`} style={{ marginRight: '0.2rem' }}></i>
-            {isAdmin ? 'Demote' : 'Promote'}
-          </button>
         )}
         <button onClick={() => onView(member)} style={s.viewProfileBtn}>
           View Profile <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}></i>
