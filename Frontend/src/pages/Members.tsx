@@ -46,13 +46,7 @@ const Members = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
 
-  if (loading) return <MembersSkeleton />;
-
-  const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
-
-  const admins = members.filter((m) => m.role === 'admin');
-  const activeCount = members.filter((m) => m.is_active !== false).length;
-
+  // ALL hooks must be called before any early returns (React rules of hooks)
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
       const matchesSearch = !search ||
@@ -72,6 +66,12 @@ const Members = () => {
     });
   }, [members, search, filterRole, filterDepartment, filterStatus, sortBy]);
 
+  if (loading) return <MembersSkeleton />;
+
+  const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
+
+  const admins = members.filter((m) => m.role === 'admin');
+  const activeCount = members.filter((m) => m.is_active !== false).length;
   const filteredAdmins = filteredMembers.filter((m) => m.role === 'admin');
   const filteredRegular = filteredMembers.filter((m) => m.role !== 'admin');
 
