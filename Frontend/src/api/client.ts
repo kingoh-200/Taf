@@ -38,11 +38,12 @@ api.interceptors.request.use((config) => {
 // Routes that require authentication — only redirect to login for these
 const PROTECTED_ROUTES = ['/profile', '/admin', '/gallery/upload'];
 
-// Cache GET responses automatically
+// Cache GET responses automatically (include token in key so auth/non-auth are separate)
 api.interceptors.response.use(
   (response) => {
     if (response.config.method === 'get') {
-      setCache(response.config.url || '', response.data);
+      const token = localStorage.getItem('token') || '';
+      setCache(`${response.config.url || ''}:${token.slice(0, 8)}`, response.data);
     }
     return response;
   },
@@ -71,7 +72,9 @@ api.interceptors.response.use(
  * Returns { data, fromCache } so the UI can show content immediately.
  */
 export async function cachedGet<T = any>(url: string): Promise<{ data: T; fromCache: boolean }> {
-  const cached = getCached(url);
+  const token = localStorage.getItem('token') || '';
+  const cacheKey = `${url}:${token.slice(0, 8)}`;
+  const cached = getCached(cacheKey);
   if (cached !== null) {
     return { data: cached, fromCache: true };
   }
