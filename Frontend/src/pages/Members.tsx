@@ -81,10 +81,7 @@ const Members = () => {
 
   const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
 
-  const admins = members.filter((m) => m.role === 'admin');
   const activeCount = members.filter((m) => m.is_active !== false).length;
-  const filteredAdmins = filteredMembers.filter((m) => m.role === 'admin');
-  const filteredRegular = filteredMembers.filter((m) => m.role !== 'admin');
 
   return (
     <div style={s.page}>
@@ -114,16 +111,7 @@ const Members = () => {
             </div>
             <div>
               <div style={s.statNumber}>{members.length}</div>
-              <div style={s.statLabel}>Members</div>
-            </div>
-          </div>
-          <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: 'var(--admin-bg)', color: 'var(--accent)' }}>
-              <i className="fa-solid fa-crown"></i>
-            </div>
-            <div>
-              <div style={s.statNumber}>{admins.length}</div>
-              <div style={s.statLabel}>Admins</div>
+              <div style={s.statLabel}>Total Members</div>
             </div>
           </div>
           <div style={s.statCard}>
@@ -198,38 +186,19 @@ const Members = () => {
         </p>
       ) : (
         <>
-          {/* Administrators Section */}
-          {filteredAdmins.length > 0 && (
-            <section style={s.section}>
-              <div style={s.sectionHeader}>
-                <div style={s.sectionTitleRow}>
-                  <i className="fa-solid fa-crown" style={{ color: 'var(--accent)', fontSize: '1.1rem' }}></i>
-                  <h2 style={s.sectionTitle}>Administrators</h2>
-                  <span style={{ ...s.countBadge, background: 'var(--admin-bg)', color: 'var(--admin-text)' }}>{filteredAdmins.length}</span>
-                </div>
-                <div style={s.sectionDividerOrange}></div>
-              </div>
-              <div style={s.cardGrid}>
-                {filteredAdmins.map((member) => (
-                  <TeamCard key={member.id} member={member} onView={setSelectedMember} onPromote={user?.role === 'admin' ? handlePromote : undefined} currentUserId={user?.id} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Members Section */}
-          {filteredRegular.length > 0 && (
+          {/* All Members Section */}
+          {filteredMembers.length > 0 && (
             <section style={s.section}>
               <div style={s.sectionHeader}>
                 <div style={s.sectionTitleRow}>
                   <i className="fa-solid fa-users" style={{ color: 'var(--primary)', fontSize: '1.1rem' }}></i>
-                  <h2 style={s.sectionTitle}>Members</h2>
-                  <span style={{ ...s.countBadge, background: 'var(--member-bg)', color: 'var(--member-text)' }}>{filteredRegular.length}</span>
+                  <h2 style={s.sectionTitle}>Our Team</h2>
+                  <span style={{ ...s.countBadge, background: 'var(--member-bg)', color: 'var(--member-text)' }}>{filteredMembers.length}</span>
                 </div>
                 <div style={s.sectionDividerBlue}></div>
               </div>
               <div style={s.cardGrid}>
-                {filteredRegular.map((member) => (
+                {filteredMembers.map((member) => (
                   <TeamCard key={member.id} member={member} onView={setSelectedMember} onPromote={user?.role === 'admin' ? handlePromote : undefined} currentUserId={user?.id} />
                 ))}
               </div>
@@ -309,19 +278,12 @@ const TeamCard = ({ member, onView, onPromote, currentUserId }: { member: Member
         {/* Avatar */}
         <div style={{
           ...s.cardAvatar,
-          background: isAdmin
-            ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))'
-            : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+          background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         }}>
           {member.image_url ? (
             <img src={member.image_url} alt={member.name} style={s.cardImg} />
           ) : (
             <span style={s.cardInitials}>{initials}</span>
-          )}
-          {isAdmin && (
-            <div style={s.crownBadge}>
-              <i className="fa-solid fa-crown" style={{ fontSize: '0.55rem', color: '#fff' }}></i>
-            </div>
           )}
         </div>
 
@@ -330,11 +292,11 @@ const TeamCard = ({ member, onView, onPromote, currentUserId }: { member: Member
           <h3 style={s.cardName}>{member.name}</h3>
           <span style={{
             ...s.roleTag,
-            background: isAdmin ? 'var(--admin-bg)' : 'var(--member-bg)',
-            color: isAdmin ? 'var(--admin-text)' : 'var(--member-text)',
+            background: 'var(--member-bg)',
+            color: 'var(--member-text)',
           }}>
-            <i className={`fa-solid ${isAdmin ? 'fa-crown' : 'fa-id-badge'}`} style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
-            {isAdmin ? 'Founder' : 'Member'}
+            <i className="fa-solid fa-id-badge" style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
+            Member
           </span>
         </div>
       </div>
@@ -420,7 +382,6 @@ const TeamCard = ({ member, onView, onPromote, currentUserId }: { member: Member
 };
 
 const MemberDetail = ({ member }: { member: MemberData }) => {
-  const isAdmin = member.role === 'admin';
   const initials = member.name
     ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -430,7 +391,7 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
     <div style={{ textAlign: 'center' }}>
       <div style={{
         width: 100, height: 100, borderRadius: '50%', margin: '0 auto 1rem',
-        background: isAdmin ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))' : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+        background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
       }}>
         {member.image_url ? (
@@ -442,12 +403,12 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
       <h2 style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>{member.name}</h2>
       <span style={{
         ...s.roleTag,
-        background: isAdmin ? 'var(--admin-bg)' : 'var(--member-bg)',
-        color: isAdmin ? 'var(--admin-text)' : 'var(--member-text)',
+        background: 'var(--member-bg)',
+        color: 'var(--member-text)',
         marginBottom: '1rem', display: 'inline-flex',
       }}>
-        <i className={`fa-solid ${isAdmin ? 'fa-crown' : 'fa-id-badge'}`} style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
-        {isAdmin ? 'Admin' : 'Member'}
+        <i className="fa-solid fa-id-badge" style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
+        Member
       </span>
 
       <div style={{ textAlign: 'left', marginTop: '1rem' }}>
