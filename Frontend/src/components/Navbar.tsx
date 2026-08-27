@@ -297,9 +297,9 @@ const Navbar = () => {
             </p>
 
             <div style={modalStyles.steps}>
-              <div style={modalStyles.step}>📱 <strong>iPhone (Safari):</strong> Tap the <i className="fa-solid fa-share-from-square"></i> Share button → "Add to Home Screen"</div>
-              <div style={modalStyles.step}>🤖 <strong>Android (Chrome):</strong> Tap the <i className="fa-solid fa-ellipsis-vertical"></i> 3-dot menu → "Install app"</div>
-              <div style={modalStyles.step}>💻 <strong>Desktop (Chrome/Edge):</strong> Click the install icon in the address bar (right side)</div>
+              <div style={modalStyles.step}><i className="fa-solid fa-mobile-screen-button" style={{ marginRight: '0.4rem', color: 'var(--primary)' }}></i> <strong>iPhone (Safari):</strong> Tap the <i className="fa-solid fa-share-from-square"></i> Share button → "Add to Home Screen"</div>
+              <div style={modalStyles.step}><i className="fa-solid fa-robot" style={{ marginRight: '0.4rem', color: '#16a34a' }}></i> <strong>Android (Chrome):</strong> Tap the <i className="fa-solid fa-ellipsis-vertical"></i> 3-dot menu → "Install app"</div>
+              <div style={modalStyles.step}><i className="fa-solid fa-desktop" style={{ marginRight: '0.4rem', color: '#8b5cf6' }}></i> <strong>Desktop (Chrome/Edge):</strong> Click the install icon in the address bar (right side)</div>
             </div>
 
             <button style={modalStyles.gotIt} onClick={() => setShowInstallModal(false)}>

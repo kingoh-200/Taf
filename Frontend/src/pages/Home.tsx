@@ -92,7 +92,7 @@ const Home = () => {
               )}
               <div>
                 <h1 style={s.heroTitle}>
-                  Welcome back, {user.name || user.username} 👋
+                  Welcome back, {user.name || user.username}!
                 </h1>
                 <p style={s.heroSubtitle}>Here's what's happening at Teens Aloud Foundation.</p>
               </div>
