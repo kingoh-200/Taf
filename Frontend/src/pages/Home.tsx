@@ -324,18 +324,18 @@ const Home = () => {
           </div>
           <div style={s.aboutVisual}>
             <div style={s.aboutIconGrid}>
-              <div style={{ ...s.aboutIcon, background: 'rgba(0,160,220,0.1)' }}>
+              <Link to="/members" style={{ ...s.aboutIcon, background: 'rgba(0,160,220,0.1)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-users" style={{ color: 'var(--primary)' }}></i>
-              </div>
-              <div style={{ ...s.aboutIcon, background: 'rgba(247,148,29,0.1)' }}>
+              </Link>
+              <Link to="/about" style={{ ...s.aboutIcon, background: 'rgba(247,148,29,0.1)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-globe" style={{ color: 'var(--accent)' }}></i>
-              </div>
-              <div style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.1)' }}>
+              </Link>
+              <Link to="/ministries" style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.1)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-book-open" style={{ color: '#16a34a' }}></i>
-              </div>
-              <div style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.1)' }}>
+              </Link>
+              <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.1)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-hand-holding-heart" style={{ color: '#8b5cf6' }}></i>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
