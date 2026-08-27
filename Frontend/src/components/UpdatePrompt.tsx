@@ -82,7 +82,7 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 10000,
     maxWidth: 420,
     width: 'calc(100% - 2rem)',
-    animation: 'slideUp 0.3s ease-out',
+    animation: 'slideUpCentered 0.3s ease-out',
   },
   content: {
     display: 'flex',
