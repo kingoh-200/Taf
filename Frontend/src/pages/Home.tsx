@@ -356,10 +356,13 @@ const Home = () => {
           <div style={s.galleryGrid}>
             {galleryItems.slice(0, 6).map((item) => (
               <Link key={item.id} to="/gallery" style={s.galleryItem}>
-                <img src={item.thumbnail_url || item.url} alt={item.caption || ''} style={s.galleryImg} loading="lazy" />
-                <div style={s.galleryOverlay}>
-                  {item.type === 'video' && <i className="fa-solid fa-play" style={{ color: '#fff', fontSize: '1.2rem' }}></i>}
-                </div>
+                {item.type === 'video' ? (
+                  <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="fa-solid fa-play" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.5rem' }}></i>
+                  </div>
+                ) : (
+                  <img src={item.thumbnail_url || item.url} alt={item.caption || ''} style={s.galleryImg} loading="lazy" />
+                )}
               </Link>
             ))}
           </div>
@@ -886,22 +889,14 @@ const s: Record<string, React.CSSProperties> = {
     overflow: 'hidden',
     aspectRatio: '1',
     display: 'block',
+    background: 'var(--bg-alt)',
+    border: '1px solid var(--border-light)',
   },
   galleryImg: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    transition: 'transform 0.3s',
-  },
-  galleryOverlay: {
-    position: 'absolute',
-    inset: 0,
-    background: 'rgba(0,0,0,0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: 0,
-    transition: 'opacity 0.3s',
+    display: 'block',
   },
 
   /* ─── CTA ─── */
