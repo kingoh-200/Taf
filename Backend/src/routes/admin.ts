@@ -57,12 +57,19 @@ router.get('/users', authenticate, adminOnly, async (_req: AuthRequest, res: Res
   }
 });
 
+const MAIN_ADMIN_EMAIL = 'kingoina254@gmail.com';
+
 router.put('/users/:id/role', authenticate, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
     if (!['admin', 'member'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role.' });
+    }
+    // Only the main admin can change roles
+    const [requester] = await db('users').where({ id: req.user!.id }).select('email');
+    if (!requester || requester.email !== MAIN_ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Only the main admin can change user roles.' });
     }
     // Prevent demoting yourself
     if (Number(id) === req.user!.id && role !== 'admin') {
