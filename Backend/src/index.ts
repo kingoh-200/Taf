@@ -127,8 +127,7 @@ async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, item_id)
       )
-    `);
-    await db.raw(`
+    `);    await db.raw(`
       CREATE TABLE IF NOT EXISTS gallery_saves (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -137,6 +136,16 @@ async function initializeDatabase() {
         UNIQUE(user_id, item_id)
       )
     `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS gallery_comments (
+        id SERIAL PRIMARY KEY,
+        item_id INTEGER REFERENCES gallery_items(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     await db.raw(`
       CREATE TABLE IF NOT EXISTS newsletter_subscribers (
         id SERIAL PRIMARY KEY,
