@@ -675,6 +675,18 @@ footer .bottom-link:hover {
   box-shadow: var(--shadow-lg);
 }
 
+/* Team card hover effects */
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,119,182,0.15);
+  border-color: var(--primary, #0077B6);
+}
+.team-card-selected {
+  border-color: var(--primary, #0077B6) !important;
+  background: var(--bg-alt, #f0f7ff) !important;
+  box-shadow: 0 0 0 3px rgba(0,119,182,0.15);
+}
+
 /* Split view responsive: stack on mobile */
 @media (max-width: 768px) {
   .split-view {
@@ -698,6 +710,10 @@ footer .bottom-link:hover {
     width: 100% !important;
     z-index: 999 !important;
     overflow-y: auto !important;
+  }
+  /* Single column on very small screens */
+  .team-card {
+    grid-column: span 1 !important;
   }
 }
 

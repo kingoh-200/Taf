@@ -76,7 +76,7 @@ const MembersSplitView = () => {
     <div className="split-view" style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
       {/* LEFT: Member List */}
       <div className="split-view-left" style={{
-        flex: selectedMember ? '0 0 440px' : '1 1 100%',
+        flex: selectedMember ? '0 0 520px' : '1 1 100%',
         borderRight: selectedMember ? '1px solid var(--border, #e2e8f0)' : 'none',
         overflowY: 'auto',
         height: 'calc(100vh - 60px)',
@@ -184,8 +184,12 @@ const MembersSplitView = () => {
                 </div>
                 <div style={s.sectionDividerBlue}></div>
               </div>
-              <div style={s.cardGrid}>
-                {filteredMembers.map((member) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                {[...filteredMembers].sort((a, b) => {
+                  if (selectedMember && a.id === selectedMember.id) return -1;
+                  if (selectedMember && b.id === selectedMember.id) return 1;
+                  return 0;
+                }).map((member) => (
                   <TeamCard key={member.id} member={member} onView={setSelectedMember} isSelected={selectedMember?.id === member.id} />
                 ))}
               </div>
@@ -245,10 +249,9 @@ const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: 
     ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
   const skills = member.skills ? member.skills.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const joined = new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div style={{ ...s.teamCard, ...(isSelected ? { border: '2px solid var(--primary, #0077B6)', background: 'var(--bg-alt, #f0f7ff)' } : {}) }}>
+    <div className={`team-card${isSelected ? ' team-card-selected' : ''}`} style={s.teamCard}>
       <div style={s.cardTop}>
         {/* Avatar */}
         <div style={{
@@ -276,8 +279,8 @@ const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: 
         </div>
       </div>
 
-      {/* Details */}
-      <div style={s.cardDetails}>
+      {/* Details — compact */}
+      <div style={{ marginBottom: '0.3rem' }}>
         {member.title && (
           <div style={s.detailLine}>
             <i className="fa-solid fa-briefcase" style={s.detailIcon}></i>
@@ -290,51 +293,28 @@ const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: 
             <span>{member.department}</span>
           </div>
         )}
-        {member.location && (
-          <div style={s.detailLine}>
-            <i className="fa-solid fa-location-dot" style={s.detailIcon}></i>
-            <span>{member.location}</span>
-          </div>
-        )}
       </div>
 
-      {/* Bio */}
-      {member.bio && (
-        <p style={s.cardBio}>{member.bio}</p>
-      )}
-
-      {/* Skills */}
+      {/* Skills — max 3 shown */}
       {skills.length > 0 && (
-        <div style={s.skillsRow}>
-          {skills.map((skill, i) => (
-            <span key={i} style={s.skillChip}>{skill}</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.4rem' }}>
+          {skills.slice(0, 3).map((skill, i) => (
+            <span key={i} style={{ padding: '0.12rem 0.45rem', borderRadius: 8, fontSize: '0.65rem', fontWeight: 600, background: 'var(--bg-alt)', color: 'var(--primary)', border: '1px solid var(--border)' }}>{skill}</span>
           ))}
+          {skills.length > 3 && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>+{skills.length - 3}</span>}
         </div>
       )}
 
-      {/* Footer: Status + Joined */}
-      <div style={s.cardFooter}>
-        <div style={s.statusRow}>
-          <span style={{ ...s.statusDot, background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
-          <span style={{ fontSize: '0.8rem', color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>
+      {/* Footer: Status + View */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '0.4rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
+          <span style={{ fontSize: '0.7rem', color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>
             {member.is_active !== false ? 'Active' : 'Inactive'}
           </span>
         </div>
-        <span style={s.joinedDate}>
-          <i className="fa-solid fa-calendar" style={{ marginRight: '0.25rem' }}></i>
-          Joined {joined}
-        </span>
-      </div>
-
-      {/* Actions */}
-      <div style={s.cardActions}>
-        {member.email && (
-          <a href={`mailto:${member.email}`} style={s.emailIcon} title="Send email">
-            <i className="fa-solid fa-envelope"></i>
-          </a>
-        )}
-        <button onClick={() => onView(member)} style={s.viewProfileBtn}>
-          View Profile <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}></i>
+        <button onClick={(e) => { e.stopPropagation(); onView(member); }} style={{ padding: '0.25rem 0.6rem', borderRadius: 6, border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+          View <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.6rem', marginLeft: '0.2rem' }}></i>
         </button>
       </div>
     </div>
@@ -605,79 +585,80 @@ const s: Record<string, React.CSSProperties> = {
   // Hero
   hero: {
     background: 'var(--hero-bg)',
-    borderRadius: 16,
-    padding: '2rem',
-    marginBottom: '1.5rem',
+    borderRadius: 14,
+    padding: '1.2rem 1.5rem',
+    marginBottom: '1rem',
     border: '1px solid var(--border)',
   },
   heroContent: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '2rem',
-    marginBottom: '1.5rem',
+    gap: '1rem',
+    marginBottom: '0.8rem',
   },
   heroLeft: { flex: 1 },
   heroTitle: {
-    fontSize: '1.8rem',
+    fontSize: '1.3rem',
     fontWeight: 700,
     color: 'var(--text)',
-    marginBottom: '0.5rem',
+    marginBottom: '0.3rem',
   },
   heroSubtitle: {
-    fontSize: '0.95rem',
+    fontSize: '0.82rem',
     color: 'var(--text-light)',
-    lineHeight: 1.6,
+    lineHeight: 1.5,
   },
   heroIllustration: {
     flexShrink: 0,
+    display: 'none',
   },
   statsRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '1rem',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '0.6rem',
   },
   statCard: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.8rem',
+    gap: '0.5rem',
     background: 'var(--card-bg)',
-    borderRadius: 12,
-    padding: '1rem',
+    borderRadius: 10,
+    padding: '0.6rem 0.8rem',
     border: '1px solid var(--border)',
   },
   statIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1.1rem',
+    fontSize: '0.85rem',
   },
   statNumber: {
-    fontSize: '1.5rem',
+    fontSize: '1.2rem',
     fontWeight: 700,
     color: 'var(--text)',
     lineHeight: 1,
   },
   statLabel: {
-    fontSize: '0.8rem',
+    fontSize: '0.7rem',
     color: 'var(--text-light)',
   },
 
   // Filters
   filtersBar: {
     display: 'flex',
-    gap: '0.8rem',
+    gap: '0.5rem',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: '1rem',
-    marginTop: '0.5rem',
+    marginBottom: '0.8rem',
+    marginTop: '0.3rem',
   },
   searchBox: {
     flex: 1,
-    minWidth: 220,
+    minWidth: 180,
     position: 'relative' as const,
   },
   searchIcon: {
@@ -690,18 +671,18 @@ const s: Record<string, React.CSSProperties> = {
   },
   searchInput: {
     width: '100%',
-    padding: '0.6rem 0.8rem 0.6rem 2.4rem',
-    borderRadius: 10,
+    padding: '0.45rem 0.7rem 0.45rem 2.2rem',
+    borderRadius: 8,
     border: '1px solid var(--border)',
     background: 'var(--input-bg)',
     color: 'var(--text)',
-    fontSize: '0.88rem',
+    fontSize: '0.8rem',
     outline: 'none',
     boxSizing: 'border-box' as const,
   },
   filterGroup: {
     display: 'flex',
-    gap: '0.5rem',
+    gap: '0.4rem',
     flexWrap: 'wrap',
   },
   selectWrap: {
@@ -711,18 +692,18 @@ const s: Record<string, React.CSSProperties> = {
   },
   filterIcon: {
     position: 'absolute' as const,
-    left: 10,
+    left: 8,
     color: 'var(--text-muted)',
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
     pointerEvents: 'none' as const,
   },
   select: {
-    padding: '0.6rem 0.7rem 0.6rem 2rem',
-    borderRadius: 10,
+    padding: '0.45rem 0.6rem 0.45rem 1.8rem',
+    borderRadius: 8,
     border: '1px solid var(--border)',
     background: 'var(--input-bg)',
     color: 'var(--text)',
-    fontSize: '0.85rem',
+    fontSize: '0.78rem',
     cursor: 'pointer',
     appearance: 'auto' as const,
   },
@@ -776,22 +757,23 @@ const s: Record<string, React.CSSProperties> = {
   // Team card
   teamCard: {
     background: 'var(--card-bg)',
-    borderRadius: 14,
-    padding: '1.2rem',
-    border: '1px solid var(--border)',
-    transition: 'box-shadow 0.2s, transform 0.2s',
+    borderRadius: 12,
+    padding: '0.9rem',
+    border: '1.5px solid var(--border)',
+    transition: 'all 0.2s ease',
     display: 'flex',
     flexDirection: 'column' as const,
+    cursor: 'pointer',
   },
   cardTop: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.8rem',
-    marginBottom: '0.8rem',
+    gap: '0.6rem',
+    marginBottom: '0.5rem',
   },
   cardAvatar: {
-    width: 52,
-    height: 52,
+    width: 42,
+    height: 42,
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -799,6 +781,7 @@ const s: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     overflow: 'hidden',
     position: 'relative' as const,
+    border: '2px solid rgba(255,255,255,0.3)',
   },
   cardImg: {
     width: '100%',
@@ -806,7 +789,7 @@ const s: Record<string, React.CSSProperties> = {
     objectFit: 'cover',
   },
   cardInitials: {
-    fontSize: '1.1rem',
+    fontSize: '0.9rem',
     fontWeight: 700,
     color: '#fff',
   },
@@ -814,8 +797,8 @@ const s: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     bottom: -2,
     right: -2,
-    width: 18,
-    height: 18,
+    width: 16,
+    height: 16,
     borderRadius: '50%',
     background: 'var(--accent)',
     display: 'flex',
@@ -824,10 +807,10 @@ const s: Record<string, React.CSSProperties> = {
     border: '2px solid var(--card-bg, #fff)',
   },
   cardName: {
-    fontSize: '1rem',
+    fontSize: '0.88rem',
     fontWeight: 600,
     color: 'var(--text)',
-    marginBottom: '0.2rem',
+    marginBottom: '0.15rem',
   },
   roleTag: {
     display: 'inline-flex',
