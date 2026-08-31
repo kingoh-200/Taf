@@ -35,7 +35,7 @@ interface Comment {
 }
 
 const Gallery = () => {
-  const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 10000 });
+  const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 30000 });
   const [optimisticItems, setOptimisticItems] = useState<Map<number, Partial<GalleryItem>>>(new Map());
   // Merge polled data with optimistic local updates
   const items = polledItems.map((item) => {

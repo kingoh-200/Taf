@@ -6,7 +6,7 @@ import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import EventCalendar from '../components/EventCalendar';
 
 const Events = () => {
-  const { data: events, loading, newCount, acceptNew } = useRealtimePolling<Event[]>('/events', [], { interval: 15000 });
+  const { data: events, loading, newCount, acceptNew } = useRealtimePolling<Event[]>('/events', [], { interval: 30000 });
   const [view, setView] = useState<'grid' | 'calendar'>('grid');
 
   if (loading) return (

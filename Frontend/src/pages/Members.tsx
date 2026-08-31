@@ -38,7 +38,7 @@ const MembersSkeleton = () => (
 const Members = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 15000 });
+  const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 30000 });
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'member'>('all');
