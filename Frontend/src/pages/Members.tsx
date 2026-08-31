@@ -339,7 +339,7 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
   }, [member.id]);
 
   return (
-    <div style={{ maxWidth: 780, width: '100%' }}>
+    <div style={{ width: '100%' }}>
       {/* Hero Header */}
       <div style={{
         background: 'linear-gradient(135deg, var(--primary, #0077B6), var(--primary-dark, #005f8f), var(--accent, #F7941D))',
@@ -577,9 +577,9 @@ const MemberDetail = ({ member }: { member: MemberData }) => {
 
 const s: Record<string, React.CSSProperties> = {
   page: {
-    maxWidth: 1200,
-    margin: '0 auto',
-    padding: '0 1rem 2rem',
+    width: '100%',
+    margin: 0,
+    padding: 0,
   },
 
   // Hero
