@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { getGalleryItems, createGalleryItem, deleteGalleryItem, toggleLike, toggleSave, getSavedItems, getComments, addComment, deleteComment } from '../controllers/galleryController';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
 // Public: get all gallery items
-router.get('/', getGalleryItems);
+router.get('/', optionalAuth, getGalleryItems);
 
 // Protected: upload new item
 router.post('/', authenticate, createGalleryItem);
