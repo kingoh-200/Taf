@@ -36,7 +36,8 @@ const MembersSkeleton = () => (
   </div>
 );
 
-const Members = () => {
+/** Split view wrapper — shows member list on left, profile on right */
+const MembersSplitView = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 30000 });
@@ -47,12 +48,11 @@ const Members = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
 
-  // ALL hooks must be called before any early returns (React rules of hooks)
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
       const matchesSearch = !search ||
         m.name.toLowerCase().includes(search.toLowerCase()) ||
-        (m.bio && m.bio.toLowerCase().includes(search.toLowerCase())) ||
+        (m.role && m.role.toLowerCase().includes(search.toLowerCase())) ||
         (m.skills && m.skills.toLowerCase().includes(search.toLowerCase()));
       const matchesRole = filterRole === 'all' || m.role === filterRole;
       const matchesDept = filterDepartment === 'all' || m.department === filterDepartment;
@@ -67,117 +67,114 @@ const Members = () => {
     });
   }, [members, search, filterRole, filterDepartment, filterStatus, sortBy]);
 
-  if (loading) return <MembersSkeleton />;
-
+  const activeCount = members.filter((m) => m.is_active !== false).length;
   const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
 
-  const activeCount = members.filter((m) => m.is_active !== false).length;
+  if (loading) return <MembersSkeleton />;
 
   return (
-    <div style={s.page}>
-      {/* Hero Header */}
-      <div style={s.hero}>
-        <div style={s.heroContent}>
-          <div style={s.heroLeft}>
-            <h1 style={s.heroTitle}>
-              <i className="fa-solid fa-people-group" style={{ color: 'var(--primary)', marginRight: '0.6rem' }}></i>
-              Meet Our Team
-            </h1>
-            <p style={s.heroSubtitle}>
-              The passionate people behind Teens Aloud Foundation.<br />
-              Together, we learn, grow and create impact.
+    <div className="split-view" style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
+      {/* LEFT: Member List */}
+      <div className="split-view-left" style={{
+        flex: selectedMember ? '0 0 440px' : '1 1 100%',
+        borderRight: selectedMember ? '1px solid var(--border, #e2e8f0)' : 'none',
+        overflowY: 'auto',
+        height: 'calc(100vh - 60px)',
+        position: 'sticky',
+        top: 60,
+        background: 'var(--bg, #f8fafc)',
+      }}>
+        <div style={{ padding: '0 1rem' }}>
+          <div style={s.hero}>
+            <div style={s.heroContent}>
+              <div style={s.heroLeft}>
+                <h1 style={s.heroTitle}>
+                  <i className="fa-solid fa-people-group" style={{ color: 'var(--primary)', marginRight: '0.6rem' }}></i>
+                  Meet Our Team
+                </h1>
+                <p style={s.heroSubtitle}>
+                  The passionate people behind Teens Aloud Foundation.<br />
+                  Together, we learn, grow and create impact.
+                </p>
+              </div>
+              <div style={s.heroIllustration}>
+                <i className="fa-solid fa-people-group" style={{ fontSize: '4rem', color: 'var(--primary)', opacity: 0.2 }}></i>
+              </div>
+            </div>
+            <div style={s.statsRow}>
+              <div style={s.statCard}>
+                <div style={{ ...s.statIcon, background: 'var(--member-bg)', color: 'var(--primary)' }}>
+                  <i className="fa-solid fa-users"></i>
+                </div>
+                <div>
+                  <div style={s.statNumber}>{members.length}</div>
+                  <div style={s.statLabel}>Total Members</div>
+                </div>
+              </div>
+              <div style={s.statCard}>
+                <div style={{ ...s.statIcon, background: 'rgba(22,163,74,0.15)', color: 'var(--success)' }}>
+                  <i className="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div style={s.statNumber}>{activeCount}</div>
+                  <div style={s.statLabel}>Active</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {members.length > 0 && (
+            <div style={s.filtersBar}>
+              <div style={s.searchBox}>
+                <i className="fa-solid fa-magnifying-glass" style={s.searchIcon}></i>
+                <input type="text" placeholder="Search members..." value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
+              </div>
+              <div style={s.filtersRow}>
+                <div style={s.selectWrap}>
+                  <i className="fa-solid fa-user" style={s.filterIcon}></i>
+                  <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as any)} style={s.select}>
+                    <option value="all">Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                  </select>
+                </div>
+                <div style={s.selectWrap}>
+                  <i className="fa-solid fa-building" style={s.filterIcon}></i>
+                  <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} style={s.select}>
+                    <option value="all">Department</option>
+                    {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div style={s.selectWrap}>
+                  <i className="fa-solid fa-signal" style={s.filterIcon}></i>
+                  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} style={s.select}>
+                    <option value="all">Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div style={s.selectWrap}>
+                  <i className="fa-solid fa-arrow-up-wide-short" style={s.filterIcon}></i>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} style={s.select}>
+                    <option value="newest">Sort: Newest</option>
+                    <option value="oldest">Sort: Oldest</option>
+                    <option value="name">Sort: Name</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: '0.5rem' }}>
+            <NewItemsBanner count={newCount} onClick={acceptNew} />
+          </div>
+
+          {members.length === 0 ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+              <i className="fa-solid fa-user-slash" style={{ marginRight: '0.3rem' }}></i>
+              No members to display yet.
             </p>
-          </div>
-          <div style={s.heroIllustration}>
-            <i className="fa-solid fa-people-group" style={{ fontSize: '4rem', color: 'var(--primary)', opacity: 0.2 }}></i>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={s.statsRow}>
-          <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: 'var(--member-bg)', color: 'var(--primary)' }}>
-              <i className="fa-solid fa-users"></i>
-            </div>
-            <div>
-              <div style={s.statNumber}>{members.length}</div>
-              <div style={s.statLabel}>Total Members</div>
-            </div>
-          </div>
-          <div style={s.statCard}>
-            <div style={{ ...s.statIcon, background: 'rgba(22,163,74,0.15)', color: 'var(--success)' }}>
-              <i className="fa-solid fa-circle-check"></i>
-            </div>
-            <div>
-              <div style={s.statNumber}>{activeCount}</div>
-              <div style={s.statLabel}>Active</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Filters */}
-      {members.length > 0 && (
-        <div style={s.filtersBar}>
-          <div style={s.searchBox}>
-            <i className="fa-solid fa-magnifying-glass" style={s.searchIcon}></i>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search members by name, role, skills..."
-              style={s.searchInput}
-            />
-          </div>
-          <div style={s.filterGroup}>
-            <div style={s.selectWrap}>
-              <i className="fa-solid fa-user" style={s.filterIcon}></i>
-              <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as any)} style={s.select}>
-                <option value="all">Role</option>
-                <option value="admin">Admin</option>
-                <option value="member">Member</option>
-              </select>
-            </div>
-            <div style={s.selectWrap}>
-              <i className="fa-solid fa-building" style={s.filterIcon}></i>
-              <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} style={s.select}>
-                <option value="all">Department</option>
-                {departments.map((d) => <option key={d} value={d!}>{d}</option>)}
-              </select>
-            </div>
-            <div style={s.selectWrap}>
-              <i className="fa-solid fa-signal" style={s.filterIcon}></i>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} style={s.select}>
-                <option value="all">Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div style={s.selectWrap}>
-              <i className="fa-solid fa-arrow-up-wide-short" style={s.filterIcon}></i>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} style={s.select}>
-                <option value="newest">Sort: Newest</option>
-                <option value="oldest">Sort: Oldest</option>
-                <option value="name">Sort: Name</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginTop: '0.5rem' }}>
-        <NewItemsBanner count={newCount} onClick={acceptNew} />
-      </div>
-
-      {members.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-          <i className="fa-solid fa-user-slash" style={{ marginRight: '0.3rem' }}></i>
-          No members to display yet.
-        </p>
-      ) : (
-        <>
-          {/* All Members Section */}
-          {filteredMembers.length > 0 && (
+          ) : filteredMembers.length > 0 ? (
             <section style={s.section}>
               <div style={s.sectionHeader}>
                 <div style={s.sectionTitleRow}>
@@ -189,53 +186,61 @@ const Members = () => {
               </div>
               <div style={s.cardGrid}>
                 {filteredMembers.map((member) => (
-                  <TeamCard key={member.id} member={member} onView={setSelectedMember} />
+                  <TeamCard key={member.id} member={member} onView={setSelectedMember} isSelected={selectedMember?.id === member.id} />
                 ))}
               </div>
             </section>
-          )}
-
-          {filteredMembers.length === 0 && (
+          ) : (
             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
               <i className="fa-solid fa-magnifying-glass" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block', opacity: 0.4 }}></i>
               No members match your search.
             </div>
           )}
-        </>
-      )}
 
-      {/* CTA Banner */}
-      {!user && (
-        <div style={s.ctaBanner}>
-          <div style={s.ctaContent}>
-            <i className="fa-solid fa-heart" style={{ fontSize: '1.8rem', color: 'var(--primary)' }}></i>
-            <div style={{ flex: 1 }}>
-              <h3 style={s.ctaTitle}>Want to be part of our journey?</h3>
-              <p style={s.ctaSubtitle}>Join a community of young people learning, creating and making an impact.</p>
+          {!user && !selectedMember && (
+            <div style={s.ctaBanner}>
+              <div style={s.ctaContent}>
+                <i className="fa-solid fa-heart" style={{ fontSize: '1.8rem', color: 'var(--primary)' }}></i>
+                <div style={{ flex: 1 }}>
+                  <h3 style={s.ctaTitle}>Want to be part of our journey?</h3>
+                  <p style={s.ctaSubtitle}>Join a community of young people learning, creating and making an impact.</p>
+                </div>
+                <button onClick={() => navigate('/register')} style={s.ctaBtn}>
+                  Become a Member <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.4rem' }}></i>
+                </button>
+              </div>
             </div>
-            <button onClick={() => navigate('/register')} style={s.ctaBtn}>
-              Become a Member <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.4rem' }}></i>
-            </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Profile Modal */}
+      {/* RIGHT: Profile Detail (sticky side panel) */}
       {selectedMember && (
-        <div style={s.modalOverlay} onClick={() => setSelectedMember(null)}>
-          <div style={s.modal} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedMember(null)} style={s.modalClose}>
-              <i className="fa-solid fa-xmark"></i>
+        <div className="split-view-right" style={{
+          flex: '1 1 auto',
+          overflowY: 'auto',
+          height: 'calc(100vh - 60px)',
+          position: 'sticky',
+          top: 60,
+          background: 'var(--card-bg, #fff)',
+        }}>
+          <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--card-bg, #fff)', borderBottom: '1px solid var(--border, #e2e8f0)', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <button
+              onClick={() => setSelectedMember(null)}
+              style={{ background: 'var(--bg-alt, #f0f7ff)', border: 'none', borderRadius: 8, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text, #1e293b)', fontSize: '1rem' }}
+            >
+              <i className="fa-solid fa-arrow-left"></i>
             </button>
-            <MemberDetail member={selectedMember} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text, #1e293b)' }}>Profile</span>
           </div>
+          <MemberDetail member={selectedMember} />
         </div>
       )}
     </div>
   );
 };
 
-const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberData) => void }) => {
+const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: (m: MemberData) => void; isSelected?: boolean }) => {
   const initials = member.name
     ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -243,7 +248,7 @@ const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberDa
   const joined = new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div style={s.teamCard}>
+    <div style={{ ...s.teamCard, ...(isSelected ? { border: '2px solid var(--primary, #0077B6)', background: 'var(--bg-alt, #f0f7ff)' } : {}) }}>
       <div style={s.cardTop}>
         {/* Avatar */}
         <div style={{
@@ -1005,4 +1010,4 @@ const s: Record<string, React.CSSProperties> = {
   },
 };
 
-export default Members;
+export default MembersSplitView;
