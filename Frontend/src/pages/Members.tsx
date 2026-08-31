@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MemberCardSkeleton } from '../components/Skeleton';
 import NewItemsBanner from '../components/NewItemsBanner';
 import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import api from '../api/client';
 
 interface MemberData {
   id: string | number;
@@ -336,85 +337,254 @@ const TeamCard = ({ member, onView }: { member: MemberData; onView: (m: MemberDa
 };
 
 const MemberDetail = ({ member }: { member: MemberData }) => {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'about' | 'projects' | 'achievements'>('about');
+
   const initials = member.name
     ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
-  const skills = member.skills ? member.skills.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const skills = member.skills ? member.skills.split(',').map((sk) => sk.trim()).filter(Boolean) : [];
+  const joined = new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  useEffect(() => {
+    if (!member.id) return;
+    api.get(`/profile/${member.id}/projects`).then((r) => setProjects(r.data)).catch(() => {});
+    api.get(`/profile/${member.id}/achievements`).then((r) => setAchievements(r.data)).catch(() => {});
+  }, [member.id]);
 
   return (
-    <div style={{ textAlign: 'center' }}>
+    <div style={{ maxWidth: 780, width: '100%' }}>
+      {/* Hero Header */}
       <div style={{
-        width: 100, height: 100, borderRadius: '50%', margin: '0 auto 1rem',
-        background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+        background: 'linear-gradient(135deg, var(--primary, #0077B6), var(--primary-dark, #005f8f), var(--accent, #F7941D))',
+        borderRadius: '16px 16px 0 0',
+        padding: '2.5rem 2rem 3.5rem',
+        position: 'relative',
+        textAlign: 'center',
       }}>
-        {member.image_url ? (
-          <img src={member.image_url} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <span style={{ fontSize: '2.5rem', fontWeight: 700, color: '#fff' }}>{initials}</span>
-        )}
-      </div>
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>{member.name}</h2>
-      <span style={{
-        ...s.roleTag,
-        background: 'var(--member-bg)',
-        color: 'var(--member-text)',
-        marginBottom: '1rem', display: 'inline-flex',
-      }}>
-        <i className="fa-solid fa-id-badge" style={{ fontSize: '0.7rem', marginRight: '0.25rem' }}></i>
-        Member
-      </span>
-
-      <div style={{ textAlign: 'left', marginTop: '1rem' }}>
+        <div style={{
+          width: 90, height: 90, borderRadius: '50%', margin: '0 auto 1rem',
+          background: 'var(--card-bg, #fff)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+          border: '4px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          position: 'relative',
+          top: '1.5rem',
+        }}>
+          {member.image_url ? (
+            <img src={member.image_url} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary, #0077B6)' }}>{initials}</span>
+          )}
+        </div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginTop: '1.5rem', marginBottom: '0.3rem' }}>{member.name}</h2>
         {member.title && (
-          <div style={s.detailLine}>
-            <i className="fa-solid fa-briefcase" style={s.detailIcon}></i>
-            <span>{member.title}</span>
-          </div>
+          <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.85)', marginBottom: '0.5rem' }}>
+            <i className="fa-solid fa-briefcase" style={{ marginRight: '0.4rem' }}></i>
+            {member.title}
+          </p>
         )}
-        {member.department && (
-          <div style={s.detailLine}>
-            <i className="fa-solid fa-building" style={s.detailIcon}></i>
-            <span>{member.department}</span>
-          </div>
-        )}
-        {member.location && (
-          <div style={s.detailLine}>
-            <i className="fa-solid fa-location-dot" style={s.detailIcon}></i>
-            <span>{member.location}</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+          {member.location && (
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
+              <i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>
+              {member.location}
+            </span>
+          )}
+          <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
+            <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: member.is_active !== false ? '#4ade80' : '#94a3b8', marginRight: '0.3rem' }}></span>
+            {member.is_active !== false ? 'Available' : 'Inactive'}
+          </span>
+          <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
+            <i className="fa-solid fa-calendar" style={{ marginRight: '0.3rem' }}></i>
+            Joined {joined}
+          </span>
+        </div>
+      </div>
+
+      {/* Social Links */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', padding: '1.5rem 1rem 0', background: 'var(--card-bg, #fff)' }}>
+        {member.social_link && (
+          <a href={member.social_link} target="_blank" rel="noopener noreferrer" style={{ padding: '0.45rem 1rem', borderRadius: 8, background: 'var(--bg-alt, #f0f7ff)', color: 'var(--primary, #0077B6)', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--border, #e2e8f0)', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s' }}>
+            <i className="fa-solid fa-globe"></i> Portfolio
+          </a>
         )}
         {member.email && (
-          <div style={s.detailLine}>
-            <i className="fa-solid fa-envelope" style={s.detailIcon}></i>
-            <span>{member.email}</span>
-          </div>
+          <a href={`mailto:${member.email}`} style={{ padding: '0.45rem 1rem', borderRadius: 8, background: 'var(--primary, #0077B6)', color: '#fff', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s' }}>
+            <i className="fa-solid fa-envelope"></i> Message
+          </a>
         )}
       </div>
 
-      {member.bio && (
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-light, #64748b)', marginTop: '1rem', lineHeight: 1.6, textAlign: 'left' }}>
-          {member.bio}
-        </p>
-      )}
+      {/* Tab Navigation */}
+      <div style={{ display: 'flex', borderBottom: '2px solid var(--border, #e2e8f0)', background: 'var(--card-bg, #fff)', padding: '0 1rem' }}>
+        {([
+          { key: 'about', label: 'About', icon: 'fa-user' },
+          { key: 'projects', label: 'Projects', icon: 'fa-folder-open' },
+          { key: 'achievements', label: 'Achievements', icon: 'fa-trophy' },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              flex: 1, padding: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: activeTab === tab.key ? 700 : 500,
+              color: activeTab === tab.key ? 'var(--primary, #0077B6)' : 'var(--text-muted, #94a3b8)',
+              borderBottom: activeTab === tab.key ? '2px solid var(--primary, #0077B6)' : '2px solid transparent',
+              marginBottom: '-2px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+            }}
+          >
+            <i className={`fa-solid ${tab.icon}`} style={{ fontSize: '0.75rem' }}></i>
+            {tab.label}
+            {tab.key === 'projects' && projects.length > 0 && (
+              <span style={{ background: 'var(--primary, #0077B6)', color: '#fff', borderRadius: 10, padding: '0.1rem 0.4rem', fontSize: '0.65rem', fontWeight: 700, marginLeft: '0.2rem' }}>{projects.length}</span>
+            )}
+            {tab.key === 'achievements' && achievements.length > 0 && (
+              <span style={{ background: 'var(--accent, #F7941D)', color: '#fff', borderRadius: 10, padding: '0.1rem 0.4rem', fontSize: '0.65rem', fontWeight: 700, marginLeft: '0.2rem' }}>{achievements.length}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
-      {skills.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'center', marginTop: '1rem' }}>
-          {skills.map((skill, i) => (
-            <span key={i} style={s.skillChip}>{skill}</span>
-          ))}
-        </div>
-      )}
+      {/* Tab Content */}
+      <div style={{ padding: '1.5rem', background: 'var(--card-bg, #fff)', borderRadius: '0 0 16px 16px' }}>
+        {/* About Tab */}
+        {activeTab === 'about' && (
+          <div>
+            {member.bio && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text, #1e293b)', marginBottom: '0.5rem' }}>
+                  <i className="fa-solid fa-user" style={{ marginRight: '0.4rem', color: 'var(--primary, #0077B6)' }}></i>
+                  About {member.name?.split(' ')[0]}
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-light, #64748b)', lineHeight: 1.7 }}>{member.bio}</p>
+              </div>
+            )}
+            {!member.bio && (
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted, #94a3b8)', textAlign: 'center', padding: '1rem' }}>No bio added yet.</p>
+            )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border, #e2e8f0)' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-          <span style={{ ...s.statusDot, background: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}></span>
-          <span style={{ color: member.is_active !== false ? 'var(--success)' : 'var(--text-muted)' }}>{member.is_active !== false ? 'Active' : 'Inactive'}</span>
-        </span>
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
-          <i className="fa-solid fa-calendar" style={{ marginRight: '0.3rem' }}></i>
-          Joined {new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </span>
+            {/* Info Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.8rem', marginBottom: '1.5rem' }}>
+              {member.department && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem', borderRadius: 10, background: 'var(--bg-alt, #f0f7ff)' }}>
+                  <i className="fa-solid fa-building" style={{ color: 'var(--primary, #0077B6)', fontSize: '0.9rem' }}></i>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text, #1e293b)', fontWeight: 600 }}>{member.department}</div>
+                  </div>
+                </div>
+              )}
+              {member.location && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem', borderRadius: 10, background: 'var(--bg-alt, #f0f7ff)' }}>
+                  <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary, #0077B6)', fontSize: '0.9rem' }}></i>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text, #1e293b)', fontWeight: 600 }}>{member.location}</div>
+                  </div>
+                </div>
+              )}
+              {member.title && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem', borderRadius: 10, background: 'var(--bg-alt, #f0f7ff)' }}>
+                  <i className="fa-solid fa-briefcase" style={{ color: 'var(--primary, #0077B6)', fontSize: '0.9rem' }}></i>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text, #1e293b)', fontWeight: 600 }}>{member.title}</div>
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem', borderRadius: 10, background: 'var(--bg-alt, #f0f7ff)' }}>
+                <i className="fa-solid fa-calendar" style={{ color: 'var(--primary, #0077B6)', fontSize: '0.9rem' }}></i>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Joined</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text, #1e293b)', fontWeight: 600 }}>{joined}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills */}
+            {skills.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text, #1e293b)', marginBottom: '0.6rem' }}>
+                  <i className="fa-solid fa-code" style={{ marginRight: '0.4rem', color: 'var(--primary, #0077B6)' }}></i>
+                  Skills
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  {skills.map((skill, i) => (
+                    <span key={i} style={{ padding: '0.35rem 0.75rem', borderRadius: 20, background: 'var(--primary, #0077B6)', color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Projects Tab */}
+        {activeTab === 'projects' && (
+          <div>
+            {projects.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted, #94a3b8)' }}>
+                <i className="fa-solid fa-folder-open" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block', opacity: 0.4 }}></i>
+                <p>No projects yet.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.8rem' }}>
+                {projects.map((project) => (
+                  <div key={project.id} style={{ padding: '1rem', borderRadius: 12, background: 'var(--bg-alt, #f0f7ff)', border: '1px solid var(--border, #e2e8f0)', transition: 'transform 0.2s' }}>
+                    {project.image_url && (
+                      <img src={project.image_url} alt={project.title} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8, marginBottom: '0.6rem' }} />
+                    )}
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text, #1e293b)', marginBottom: '0.3rem' }}>{project.title}</h4>
+                    {project.description && (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-light, #64748b)', lineHeight: 1.4, marginBottom: '0.5rem' }}>{project.description.slice(0, 80)}{project.description.length > 80 ? '...' : ''}</p>
+                    )}
+                    {project.tech_stack && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.5rem' }}>
+                        {project.tech_stack.split(',').map((t: string, i: number) => (
+                          <span key={i} style={{ padding: '0.15rem 0.5rem', borderRadius: 12, background: 'var(--primary, #0077B6)', color: '#fff', fontSize: '0.65rem', fontWeight: 600 }}>{t.trim()}</span>
+                        ))}
+                      </div>
+                    )}
+                    {project.link && (
+                      <a href={project.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary, #0077B6)', fontWeight: 600, textDecoration: 'none' }}>
+                        View Project <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.65rem', marginLeft: '0.2rem' }}></i>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Achievements Tab */}
+        {activeTab === 'achievements' && (
+          <div>
+            {achievements.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted, #94a3b8)' }}>
+                <i className="fa-solid fa-trophy" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block', opacity: 0.4 }}></i>
+                <p>No achievements yet.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {achievements.map((ach) => (
+                  <div key={ach.id} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem', borderRadius: 12, background: 'var(--bg-alt, #f0f7ff)', border: '1px solid var(--border, #e2e8f0)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, var(--accent, #F7941D), #f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <i className={`fa-solid ${ach.icon || 'fa-trophy'}`} style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text, #1e293b)', margin: 0 }}>{ach.title}</h4>
+                      {ach.description && <p style={{ fontSize: '0.8rem', color: 'var(--text-light, #64748b)', margin: '0.2rem 0 0' }}>{ach.description}</p>}
+                    </div>
+                    {ach.date && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', whiteSpace: 'nowrap' }}>{ach.date}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -811,12 +981,13 @@ const s: Record<string, React.CSSProperties> = {
   modal: {
     background: 'var(--card-bg)',
     borderRadius: 16,
-    padding: 'clamp(1rem, 3vw, 2rem)',
-    maxWidth: 480,
+    padding: 0,
+    maxWidth: 780,
     width: '100%',
     maxHeight: '90vh',
     overflow: 'auto',
     position: 'relative' as const,
+    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
   },
   modalClose: {
     position: 'absolute' as const,

@@ -167,6 +167,29 @@ async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS member_projects (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        tech_stack VARCHAR(500),
+        link VARCHAR(500),
+        image_url VARCHAR(500),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS member_achievements (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        icon VARCHAR(50) DEFAULT 'fa-trophy',
+        date VARCHAR(100),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
     console.log('✅ Tables created/verified');
 
     // Add new columns if they don't exist (safe to run multiple times)
