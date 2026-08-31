@@ -84,7 +84,7 @@ const MembersSplitView = () => {
         top: 64,
         background: 'var(--bg, #f8fafc)',
       }}>
-        <div style={{ padding: '0 1rem' }}>
+        <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div style={s.hero}>
             <div style={s.heroContent}>
               <div style={s.heroLeft}>
@@ -184,7 +184,7 @@ const MembersSplitView = () => {
                 </div>
                 <div style={s.sectionDividerBlue}></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridAutoRows: '1fr', gap: '0.75rem', flex: 1 }}>
                 {[...filteredMembers].sort((a, b) => {
                   if (selectedMember && a.id === selectedMember.id) return -1;
                   if (selectedMember && b.id === selectedMember.id) return 1;
@@ -587,8 +587,9 @@ const s: Record<string, React.CSSProperties> = {
     background: 'var(--hero-bg)',
     borderRadius: 14,
     padding: '1.2rem 1.5rem',
-    marginBottom: '1rem',
+    marginBottom: '0.8rem',
     border: '1px solid var(--border)',
+    flexShrink: 0,
   },
   heroContent: {
     display: 'flex',
@@ -653,8 +654,9 @@ const s: Record<string, React.CSSProperties> = {
     gap: '0.5rem',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: '0.8rem',
-    marginTop: '0.3rem',
+    marginBottom: '0.6rem',
+    marginTop: '0.2rem',
+    flexShrink: 0,
   },
   searchBox: {
     flex: 1,
@@ -710,10 +712,15 @@ const s: Record<string, React.CSSProperties> = {
 
   // Sections
   section: {
-    marginBottom: '2rem',
+    marginBottom: '1rem',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    minHeight: 0,
   },
   sectionHeader: {
-    marginBottom: '1rem',
+    marginBottom: '0.6rem',
+    flexShrink: 0,
   },
   sectionTitleRow: {
     display: 'flex',
@@ -764,6 +771,8 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column' as const,
     cursor: 'pointer',
+    height: '100%',
+    boxSizing: 'border-box' as const,
   },
   cardTop: {
     display: 'flex',
