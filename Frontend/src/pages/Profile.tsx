@@ -5,6 +5,139 @@ import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
 
+const ProfileProjects = ({ userId }: { userId: number }) => {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', tech_stack: '', link: '', image_url: '' });
+
+  useEffect(() => {
+    api.get(`/profile/${userId}/projects`).then((r) => setProjects(r.data)).catch(() => {});
+  }, [userId]);
+
+  const handleAdd = async () => {
+    if (!form.title.trim()) return;
+    const res = await api.post(`/profile/${userId}/projects`, form);
+    setProjects([res.data, ...projects]);
+    setForm({ title: '', description: '', tech_stack: '', link: '', image_url: '' });
+    setShowForm(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    await api.delete(`/profile/${userId}/projects/${id}`);
+    setProjects(projects.filter((p) => p.id !== id));
+  };
+
+  return (
+    <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0 }}>
+          <i className="fa-solid fa-folder-open" style={{ marginRight: '0.4rem', color: 'var(--primary)' }}></i>
+          My Projects {projects.length > 0 && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({projects.length})</span>}
+        </h3>
+        <button onClick={() => setShowForm(!showForm)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}>
+          <i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>{showForm ? 'Cancel' : 'Add Project'}
+        </button>
+      </div>
+      {showForm && (
+        <div style={{ marginBottom: '1rem', padding: '1rem', borderRadius: 10, background: 'var(--bg-alt)', border: '1px solid var(--border)' }}>
+          <input placeholder="Project Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <input placeholder="Tech Stack (comma separated)" value={form.tech_stack} onChange={(e) => setForm({ ...form, tech_stack: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <input placeholder="Project Link (URL)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <button onClick={handleAdd} className="btn" style={{ fontSize: '0.8rem' }}>Save Project</button>
+        </div>
+      )}
+      {projects.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No projects added yet. Showcase your work!</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.8rem' }}>
+          {projects.map((p) => (
+            <div key={p.id} style={{ padding: '1rem', borderRadius: 10, background: 'var(--bg-alt)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                <h4 style={{ fontSize: '0.9rem', margin: 0 }}>{p.title}</h4>
+                <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.75rem' }}><i className="fa-solid fa-trash"></i></button>
+              </div>
+              {p.description && <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', margin: '0.3rem 0' }}>{p.description.slice(0, 80)}{p.description.length > 80 ? '...' : ''}</p>}
+              {p.tech_stack && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', marginTop: '0.4rem' }}>
+                  {p.tech_stack.split(',').map((t: string, i: number) => (
+                    <span key={i} style={{ padding: '0.1rem 0.4rem', borderRadius: 10, background: 'var(--primary)', color: '#fff', fontSize: '0.65rem' }}>{t.trim()}</span>
+                  ))}
+                </div>
+              )}
+              {p.link && <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.3rem', display: 'inline-block' }}>View <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.6rem' }}></i></a>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProfileAchievements = ({ userId }: { userId: number }) => {
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', date: '', icon: 'fa-trophy' });
+
+  useEffect(() => {
+    api.get(`/profile/${userId}/achievements`).then((r) => setAchievements(r.data)).catch(() => {});
+  }, [userId]);
+
+  const handleAdd = async () => {
+    if (!form.title.trim()) return;
+    const res = await api.post(`/profile/${userId}/achievements`, form);
+    setAchievements([res.data, ...achievements]);
+    setForm({ title: '', description: '', date: '', icon: 'fa-trophy' });
+    setShowForm(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    await api.delete(`/profile/${userId}/achievements/${id}`);
+    setAchievements(achievements.filter((a) => a.id !== id));
+  };
+
+  return (
+    <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0 }}>
+          <i className="fa-solid fa-trophy" style={{ marginRight: '0.4rem', color: 'var(--accent)' }}></i>
+          My Achievements {achievements.length > 0 && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({achievements.length})</span>}
+        </h3>
+        <button onClick={() => setShowForm(!showForm)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}>
+          <i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>{showForm ? 'Cancel' : 'Add Achievement'}
+        </button>
+      </div>
+      {showForm && (
+        <div style={{ marginBottom: '1rem', padding: '1rem', borderRadius: 10, background: 'var(--bg-alt)', border: '1px solid var(--border)' }}>
+          <input placeholder="Achievement Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <input placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <input placeholder="Date (e.g. Aug 2026)" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)' }} />
+          <button onClick={handleAdd} className="btn" style={{ fontSize: '0.8rem' }}>Save Achievement</button>
+        </div>
+      )}
+      {achievements.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No achievements added yet. Add your accomplishments!</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {achievements.map((a) => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1rem', borderRadius: 10, background: 'var(--bg-alt)', border: '1px solid var(--border)' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg, var(--accent), #f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className={`fa-solid ${a.icon || 'fa-trophy'}`} style={{ color: '#fff', fontSize: '0.8rem' }}></i>
+              </div>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ fontSize: '0.85rem', margin: 0 }}>{a.title}</h4>
+                {a.description && <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: '0.15rem 0 0' }}>{a.description}</p>}
+              </div>
+              {a.date && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{a.date}</span>}
+              <button onClick={() => handleDelete(a.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.7rem' }}><i className="fa-solid fa-trash"></i></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -383,6 +516,12 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      {/* Projects */}
+      <ProfileProjects userId={user.id} />
+
+      {/* Achievements */}
+      <ProfileAchievements userId={user.id} />
 
       {/* Saved from Gallery */}
       {savedItems.length > 0 && (
