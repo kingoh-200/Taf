@@ -73,15 +73,15 @@ const MembersSplitView = () => {
   if (loading) return <MembersSkeleton />;
 
   return (
-    <div className="split-view" style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
+    <div className="split-view" style={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
       {/* LEFT: Member List */}
       <div className="split-view-left" style={{
         flex: selectedMember ? '0 0 520px' : '1 1 100%',
         borderRight: selectedMember ? '1px solid var(--border, #e2e8f0)' : 'none',
         overflowY: 'auto',
-        height: 'calc(100vh - 60px)',
+        height: 'calc(100vh - 64px)',
         position: 'sticky',
-        top: 60,
+        top: 64,
         background: 'var(--bg, #f8fafc)',
       }}>
         <div style={{ padding: '0 1rem' }}>
@@ -223,9 +223,9 @@ const MembersSplitView = () => {
         <div className="split-view-right" style={{
           flex: '1 1 auto',
           overflowY: 'auto',
-          height: 'calc(100vh - 60px)',
+          height: 'calc(100vh - 64px)',
           position: 'sticky',
-          top: 60,
+          top: 64,
           background: 'var(--card-bg, #fff)',
         }}>
           <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--card-bg, #fff)', borderBottom: '1px solid var(--border, #e2e8f0)', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -251,7 +251,7 @@ const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: 
   const skills = member.skills ? member.skills.split(',').map((s) => s.trim()).filter(Boolean) : [];
 
   return (
-    <div className={`team-card${isSelected ? ' team-card-selected' : ''}`} style={s.teamCard}>
+    <div className={`team-card${isSelected ? ' team-card-selected' : ''}`} style={{ ...s.teamCard, cursor: 'pointer' }} onClick={() => onView(member)}>
       <div style={s.cardTop}>
         {/* Avatar */}
         <div style={{
@@ -313,9 +313,9 @@ const TeamCard = ({ member, onView, isSelected }: { member: MemberData; onView: 
             {member.is_active !== false ? 'Active' : 'Inactive'}
           </span>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onView(member); }} style={{ padding: '0.25rem 0.6rem', borderRadius: 6, border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
-          View <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.6rem', marginLeft: '0.2rem' }}></i>
-        </button>
+        <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          View <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.6rem' }}></i>
+        </span>
       </div>
     </div>
   );
