@@ -333,9 +333,15 @@ const Home = () => {
               <Link to="/ministries" style={{ ...s.aboutIcon, background: 'rgba(22,163,74,0.15)', textDecoration: 'none' }}>
                 <i className="fa-solid fa-book-open" style={{ color: 'var(--success)' }}></i>
               </Link>
-              <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.15)', textDecoration: 'none' }}>
-                <i className="fa-solid fa-hand-holding-heart" style={{ color: '#8b5cf6' }}></i>
-              </Link>
+              {user ? (
+                <Link to="/gallery" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.15)', textDecoration: 'none' }}>
+                  <i className="fa-solid fa-images" style={{ color: '#8b5cf6' }}></i>
+                </Link>
+              ) : (
+                <Link to="/register" style={{ ...s.aboutIcon, background: 'rgba(139,92,246,0.15)', textDecoration: 'none' }}>
+                  <i className="fa-solid fa-hand-holding-heart" style={{ color: '#8b5cf6' }}></i>
+                </Link>
+              )}
             </div>
           </div>
         </div>

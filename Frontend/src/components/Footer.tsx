@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const Footer = () => {
+  const { user } = useAuth();
   return (
     <footer style={styles.footer}>
       {/* Mountain/forest scene illustration */}
@@ -105,7 +107,7 @@ const Footer = () => {
               <h4 style={styles.linkTitle}>Connect</h4>
               <ul style={styles.linkList}>
                 <li><Link to="/members" style={styles.link}>Our Members</Link></li>
-                <li><Link to="/register" style={styles.link}>Join TAF</Link></li>
+                {!user && <li><Link to="/register" style={styles.link}>Join TAF</Link></li>}
                 <li><Link to="/profile" style={styles.link}>My Profile</Link></li>
               </ul>
             </div>
