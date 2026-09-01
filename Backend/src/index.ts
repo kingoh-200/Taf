@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth';
 import { profileRoutes } from './routes/profile';
 import { galleryRoutes } from './routes/gallery';
 import { adminRoutes } from './routes/admin';
+import { contentRoutes } from './routes/content';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -34,6 +35,7 @@ app.use('/api/members', memberRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/content', contentRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -199,6 +201,35 @@ async function initializeDatabase() {
       )
     `);
     console.log('✅ Tables created/verified');
+
+    // Site content table for editable pages
+    await db.raw(`
+      CREATE TABLE IF NOT EXISTS site_content (
+        id SERIAL PRIMARY KEY,
+        page_key VARCHAR(100) NOT NULL UNIQUE,
+        section_key VARCHAR(100) NOT NULL,
+        title VARCHAR(500),
+        body TEXT,
+        meta JSONB DEFAULT '{}',
+        updated_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Seed default contact page content if empty
+    const contentCount = await db('site_content').count('id as count').first();
+    if (contentCount && Number(contentCount.count) === 0) {
+      await db('site_content').insert([
+        { page_key: 'contact', section_key: 'hero', title: 'Contact Us', body: 'We would love to hear from you. Reach out to Teens Aloud Foundation.' },
+        { page_key: 'contact', section_key: 'info', title: 'Get In Touch', body: JSON.stringify({ email: 'info@teensaloud.com', phone: '+254 700 000 000', address: 'Nairobi, Kenya', website: 'https://teensaloud.com' }) },
+        { page_key: 'contact', section_key: 'hours', title: 'Office Hours', body: JSON.stringify({ weekdays: 'Monday - Friday: 8:00 AM - 5:00 PM', saturday: 'Saturday: 9:00 AM - 1:00 PM', sunday: 'Sunday: Closed' }) },
+        { page_key: 'home', section_key: 'hero', title: 'EMPOWERING TEENS. BUILDING FUTURES.', body: 'Creating opportunities, inspiring growth, and building a stronger generation.' },
+        { page_key: 'about', section_key: 'mission', title: 'Our Mission', body: 'To challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.' },
+        { page_key: 'about', section_key: 'vision', title: 'Our Vision', body: 'Eternal interest in teens everywhere.' },
+      ]);
+      console.log('✅ Default site content seeded');
+    }
 
     // Add new columns if they don't exist (safe to run multiple times)
     const addColumnIfNotExists = async (table: string, column: string, type: string) => {

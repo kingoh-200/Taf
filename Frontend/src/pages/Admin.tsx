@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
 
-type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'users' | 'subscribers' | 'email';
+type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'users' | 'subscribers' | 'email' | 'content';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ const Admin = () => {
     { key: 'users', label: 'Users', icon: 'fa-user-gear' },
     { key: 'subscribers', label: 'Subscribers', icon: 'fa-envelope-open-text' },
     { key: 'email', label: 'Send Email', icon: 'fa-paper-plane' },
+    { key: 'content', label: 'Content', icon: 'fa-pen-to-square' },
   ];
 
   return (
@@ -58,6 +59,7 @@ const Admin = () => {
       {activeTab === 'users' && <UsersManager />}
       {activeTab === 'subscribers' && <SubscribersManager />}
       {activeTab === 'email' && <EmailSender />}
+      {activeTab === 'content' && <ContentManager />}
     </div>
   );
 };
@@ -590,6 +592,194 @@ const deleteBtnStyle: React.CSSProperties = {
   borderRadius: 6,
   cursor: 'pointer',
   fontSize: '0.8rem',
+};
+
+// ===== CONTENT MANAGER =====
+const ContentManager = () => {
+  const [content, setContent] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activePage, setActivePage] = useState('contact');
+  const [editedContent, setEditedContent] = useState<Record<string, { title: string; body: string }>>({});
+  const [saveMsg, setSaveMsg] = useState('');
+
+  const pages = [
+    { key: 'contact', label: 'Contact Page', icon: 'fa-envelope' },
+    { key: 'home', label: 'Home Page', icon: 'fa-house' },
+    { key: 'about', label: 'About Page', icon: 'fa-info-circle' },
+  ];
+
+  const load = () => {
+    setLoading(true);
+    api.get('/content')
+      .then((res) => setContent(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const map: Record<string, { title: string; body: string }> = {};
+    content
+      .filter((c) => c.page_key === activePage)
+      .forEach((c) => {
+        map[c.section_key] = {
+          title: c.title || '',
+          body: c.body || '',
+        };
+      });
+    setEditedContent(map);
+  }, [content, activePage]);
+
+  const updateField = (sectionKey: string, field: 'title' | 'body', value: string) => {
+    setEditedContent((prev) => ({
+      ...prev,
+      [sectionKey]: { ...prev[sectionKey], [field]: value },
+    }));
+  };
+
+  const addSection = () => {
+    const key = prompt("Section key (hero, info, hours). No spaces, lowercase.");
+    if (!key || editedContent[key]) return;
+    setEditedContent((prev) => ({
+      ...prev,
+      [key]: { title: '', body: '' },
+    }));
+  };
+
+  const removeSection = (key: string) => {
+    if (!confirm(`Remove section "${key}"?`)) return;
+    setEditedContent((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      const sections = Object.entries(editedContent).map(([section_key, data]) => ({
+        section_key,
+        title: data.title,
+        body: data.body,
+      }));
+      const res = await api.put(`/content/${activePage}`, { sections });
+      setContent(res.data);
+      setSaveMsg('Saved!');
+      setTimeout(() => setSaveMsg(''), 3000);
+    } catch {
+      setSaveMsg('Failed to save.');
+    }
+    setSaving(false);
+  };
+
+  const sectionLabels: Record<string, string> = {
+    hero: 'Hero / Header',
+    info: 'Contact Information',
+    hours: 'Office Hours',
+    mission: 'Mission Statement',
+    vision: 'Vision Statement',
+  };
+
+  return (
+    <div>
+      <h2 style={{ margin: '0 0 1rem' }}>
+        <i className="fa-solid fa-pen-to-square" style={{ marginRight: '0.5rem' }}></i>
+        Content Manager
+      </h2>
+      <p style={{ color: 'var(--text-light)', margin: '0 0 1.5rem' }}>
+        Edit text content for your public pages. Changes are live immediately.
+      </p>
+
+      {/* Page selector */}
+      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        {pages.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setActivePage(p.key)}
+            style={{
+              padding: '0.5rem 1rem', borderRadius: 10, border: '1px solid var(--border)',
+              background: activePage === p.key ? 'var(--primary)' : 'var(--bg-alt)',
+              color: activePage === p.key ? '#fff' : 'var(--text-light)',
+              cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500,
+              borderColor: activePage === p.key ? 'var(--primary)' : 'var(--border)',
+            }}
+          >
+            <i className={`fa-solid ${p.icon}`} style={{ marginRight: '0.3rem' }}></i>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p style={{ color: 'var(--text-muted)' }}>Loading content...</p>
+      ) : (
+        <>
+          {/* Sections */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {Object.entries(editedContent).map(([key, data]) => (
+              <div key={key} style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1.2rem', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {key}
+                    </span>
+                    {sectionLabels[key] && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                        — {sectionLabels[key]}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeSection(key)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem 0.4rem' }}
+                    title="Remove section"
+                  >
+                    <i className="fa-solid fa-trash" style={{ fontSize: '0.8rem' }}></i>
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Title</label>
+                    <input
+                      type="text"
+                      value={data.title}
+                      onChange={(e) => updateField(key, 'title', e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Content</label>
+                    <textarea
+                      value={data.body}
+                      onChange={(e) => updateField(key, 'body', e.target.value)}
+                      rows={4}
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1.2rem', alignItems: 'center' }}>
+            <button onClick={addSection} style={{ padding: '0.6rem 1rem', borderRadius: 10, border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-light)', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>Add Section
+            </button>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '0.6rem 1.5rem', borderRadius: 10, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', opacity: saving ? 0.6 : 1 }}>
+              {saving ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Saving...</> : <><i className="fa-solid fa-floppy-disk" style={{ marginRight: '0.3rem' }}></i>Save Changes</>}
+            </button>
+            {saveMsg && <span style={{ color: saveMsg === 'Saved!' ? 'var(--success)' : 'var(--error)', fontSize: '0.9rem', fontWeight: 500 }}>{saveMsg}</span>}
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default Admin;

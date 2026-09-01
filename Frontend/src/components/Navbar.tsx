@@ -121,6 +121,7 @@ const Navbar = () => {
     { to: '/events', label: 'Events', icon: 'fa-calendar-days' },
     { to: '/members', label: 'Members', icon: 'fa-user-group' },
     { to: '/gallery', label: 'Gallery', icon: 'fa-images' },
+    { to: '/contact', label: 'Contact', icon: 'fa-envelope' },
   ];
 
   return (
