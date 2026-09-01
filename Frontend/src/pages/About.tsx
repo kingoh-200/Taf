@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { usePageContent } from '../hooks/usePageContent';
 
 const About = () => {
   const [user, setUser] = useState<any>(null);
+  const { getTitle, getBody } = usePageContent('about');
+  
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
@@ -14,22 +17,19 @@ const About = () => {
       <section style={styles.hero}>
         <h1 style={styles.heroTitle}>
           <i className="fa-solid fa-users" style={{ marginRight: '0.5rem' }}></i>
-          About Teens Aloud Foundation
+          {getTitle('hero', 'About Teens Aloud Foundation')}
         </h1>
         <p style={styles.heroSubtitle}>
-          Eternal interest in teens everywhere
+          {getBody('hero', 'Eternal interest in teens everywhere')}
         </p>
       </section>
 
       {/* Welcome */}
       <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Who We Are</h2>
-        <p style={styles.body}>
-          Teens Aloud Foundation (TAF) is a Non-Denominational, Inter-Denominational Christian youth group founded in 2005 by Rev. KK Baidoo. We believe deeply in the potential of every young person, especially teenagers, and have chosen to invest in them through various evangelistic and discipleship means.
-        </p>
-        <p style={styles.body}>
-          What started in Ghana has grown into a global movement spanning multiple countries across Africa, Europe, and North America. Our community is built on love, accountability, and a shared passion for Jesus Christ.
-        </p>
+        <h2 style={styles.sectionTitle}>{getTitle('who_we_are', 'Who We Are')}</h2>
+        {getBody('who_we_are', "Teens Aloud Foundation (TAF) is a Non-Denominational, Inter-Denominational Christian youth group founded in 2005 by Rev. KK Baidoo. We believe deeply in the potential of every young person, especially teenagers, and have chosen to invest in them through various evangelistic and discipleship means.\n\nWhat started in Ghana has grown into a global movement spanning multiple countries across Africa, Europe, and North America. Our community is built on love, accountability, and a shared passion for Jesus Christ.").split('\n\n').map((paragraph, i) => (
+          <p key={i} style={styles.body}>{paragraph}</p>
+        ))}
       </section>
 
       {/* Mission & Vision */}
@@ -38,18 +38,18 @@ const About = () => {
           <div style={{ ...styles.mvIcon, color: 'var(--primary)' }}>
             <i className="fa-solid fa-bullseye"></i>
           </div>
-          <h3 style={styles.mvTitle}>Our Mission</h3>
+          <h3 style={styles.mvTitle}>{getTitle('mission', 'Our Mission')}</h3>
           <p style={styles.mvText}>
-            To challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ through evangelism, discipleship, and community.
+            {getBody('mission', 'To challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ through evangelism, discipleship, and community.')}
           </p>
         </div>
         <div className="card" style={styles.mvCard}>
           <div style={{ ...styles.mvIcon, color: 'var(--accent)' }}>
             <i className="fa-solid fa-eye"></i>
           </div>
-          <h3 style={styles.mvTitle}>Our Vision</h3>
+          <h3 style={styles.mvTitle}>{getTitle('vision', 'Our Vision')}</h3>
           <p style={styles.mvText}>
-            To raise a generation of young people who are grounded in faith, equipped with purpose, and empowered to impact their world for Christ.
+            {getBody('vision', 'To raise a generation of young people who are grounded in faith, equipped with purpose, and empowered to impact their world for Christ.')}
           </p>
         </div>
       </section>
@@ -85,10 +85,10 @@ const About = () => {
             <i className="fa-solid fa-user-pastor" style={{ fontSize: '2rem', color: '#fff' }}></i>
           </div>
           <div>
-            <h3 style={styles.leaderName}>Rev. KK Baidoo</h3>
-            <p style={styles.leaderRole}>Founder & Global Executive Director</p>
+            <h3 style={styles.leaderName}>{getTitle('founder', 'Rev. KK Baidoo')}</h3>
+            <p style={styles.leaderRole}>{getBody('founder', 'Founder & Global Executive Director')}</p>
             <p style={styles.leaderBio}>
-              A passionate shepherd of young people, Rev. KK Baidoo founded Teens Aloud Foundation in 2005 with a heart to see teens discover their purpose in God. He continues to lead the global movement with vision, wisdom, and an unwavering love for the next generation.
+              {getBody('founder_bio', 'A passionate shepherd of young people, Rev. KK Baidoo founded Teens Aloud Foundation in 2005 with a heart to see teens discover their purpose in God. He continues to lead the global movement with vision, wisdom, and an unwavering love for the next generation.')}
             </p>
           </div>
         </div>
@@ -96,12 +96,12 @@ const About = () => {
 
       {/* Countries */}
       <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Where We Are</h2>
+        <h2 style={styles.sectionTitle}>{getTitle('countries', 'Where We Are')}</h2>
         <div style={styles.countriesGrid}>
-          {['Ghana', 'Nigeria', 'South Africa', 'Kenya', 'UK', 'Canada', 'France', 'Eswatini'].map((country) => (
-            <div key={country} style={styles.countryChip}>
+          {getBody('countries', 'Ghana, Nigeria, South Africa, Kenya, UK, Canada, France, Eswatini').split(',').map((country) => (
+            <div key={country.trim()} style={styles.countryChip}>
               <i className="fa-solid fa-location-dot" style={{ fontSize: '0.8rem' }}></i>
-              {country}
+              {country.trim()}
             </div>
           ))}
         </div>
@@ -109,9 +109,9 @@ const About = () => {
 
       {/* CTA */}
       <section style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Seize the Moment!!!</h2>
+        <h2 style={styles.ctaTitle}>{getTitle('cta', 'Seize the Moment!!!')}</h2>
         <p style={styles.ctaText}>
-          We hope you will draw closer to God and be inspired to partner with us. Feel free to connect with us — we'd love to hear from you.
+          {getBody('cta', "We hope you will draw closer to God and be inspired to partner with us. Feel free to connect with us — we'd love to hear from you.")}
         </p>
         <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           {user ? (

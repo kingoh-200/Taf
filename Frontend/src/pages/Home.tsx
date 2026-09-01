@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cachedGet } from '../api/client';
 import type { Event, Announcement } from '../api/types';
+import { usePageContent, useMinistries } from '../hooks/usePageContent';
 
 interface GalleryItem {
   id: number;
@@ -15,13 +16,6 @@ interface GalleryItem {
 import HeroCarousel from '../components/HeroCarousel';
 import NewsletterForm from '../components/NewsletterForm';
 
-const MINISTRIES = [
-  { icon: 'fa-heart', name: 'Love Fellowship', desc: 'Bringing young people together to spur themselves unto love and good works.', color: '#ef4444' },
-  { icon: 'fa-campground', name: 'Camp Vista', desc: 'Camps for re-igniting passions and building strong social networks.', color: 'var(--success)' },
-  { icon: 'fa-couch', name: 'Sermon On The Sofa', desc: 'Mixed-bag evangelistic events in secondary schools.', color: '#8b5cf6' },
-  { icon: 'fa-futbol', name: 'Sportstronic', desc: 'Reaching young people through sports, games, and experiential learning.', color: '#f59e0b' },
-];
-
 const Home = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -32,6 +26,10 @@ const Home = () => {
   const [announcementsLoading, setAnnouncementsLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(true);
   const [galleryLoading, setGalleryLoading] = useState(true);
+  
+  // Fetch editable content from database
+  const { getTitle, getBody } = usePageContent('home');
+  const { ministries } = useMinistries();
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -151,10 +149,10 @@ const Home = () => {
         <section style={s.heroLoggedOut}>
           <div style={s.heroBanner}>
             <h1 style={s.bannerTitle}>
-              EMPOWERING TEENS.<br />BUILDING FUTURES.
+              {getTitle('hero', 'EMPOWERING TEENS. BUILDING FUTURES.').split('.').join('.\n')}
             </h1>
             <p style={s.bannerSubtitle}>
-              Creating opportunities, inspiring growth, and building a stronger generation.
+              {getBody('hero', 'Creating opportunities, inspiring growth, and building a stronger generation.')}
             </p>
             <div style={s.bannerActions}>
               <Link to="/ministries" style={s.bannerBtnPrimary}>
@@ -283,18 +281,18 @@ const Home = () => {
         <div style={s.sectionHead}>
           <h2 style={s.sectionTitle}>
             <i className="fa-solid fa-seedling" style={{ marginRight: '0.5rem', color: 'var(--success)' }}></i>
-            Our Ministries
+            {getTitle('ministries_intro', 'Our Ministries')}
           </h2>
           <Link to="/ministries" style={s.seeAll}>See all <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.3rem', fontSize: '0.75rem' }}></i></Link>
         </div>
         <div style={s.ministryGrid}>
-          {MINISTRIES.map((m) => (
-            <Link key={m.name} to="/ministries" style={s.ministryCard}>
+          {ministries.map((m) => (
+            <Link key={m.id} to="/ministries" style={s.ministryCard}>
               <div style={{ ...s.ministryIcon, background: `${m.color}15` }}>
                 <i className={`fa-solid ${m.icon}`} style={{ color: m.color, fontSize: '1.5rem' }}></i>
               </div>
-              <h3 style={s.ministryName}>{m.name}</h3>
-              <p style={s.ministryDesc}>{m.desc}</p>
+              <h3 style={s.ministryName}>{m.title}</h3>
+              <p style={s.ministryDesc}>{m.description}</p>
               <span style={s.ministryLink}>
                 Learn More <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}></i>
               </span>
@@ -311,12 +309,10 @@ const Home = () => {
           <div style={s.aboutText}>
             <h2 style={s.aboutTitle}>
               <i className="fa-solid fa-heart" style={{ marginRight: '0.5rem', color: 'var(--accent)' }}></i>
-              About Teens Aloud
+              {getTitle('about', 'About Teens Aloud')}
             </h2>
             <p style={s.aboutDesc}>
-              We believe every young person has the potential to make a difference.
-              Teens Aloud Foundation is a Non-Denominational Christian fellowship with the vision
-              to challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.
+              {getBody('about', 'We believe every young person has the potential to make a difference. Teens Aloud Foundation is a Non-Denominational Christian fellowship with the vision to challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.')}
             </p>
             <Link to="/about" style={s.aboutLink}>
               Learn More <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.4rem' }}></i>
@@ -381,8 +377,8 @@ const Home = () => {
       {!user && (
         <section style={s.ctaSection}>
           <div style={s.ctaInner}>
-            <h2 style={s.ctaTitle}>Get Involved</h2>
-            <p style={s.ctaSubtitle}>Become part of Teens Aloud Foundation</p>
+            <h2 style={s.ctaTitle}>{getTitle('cta', 'Get Involved')}</h2>
+            <p style={s.ctaSubtitle}>{getBody('cta', 'Become part of Teens Aloud Foundation')}</p>
             <div style={s.ctaActions}>
               <Link to="/register" style={s.ctaBtnPrimary}>
                 <i className="fa-solid fa-user-plus" style={{ marginRight: '0.5rem' }}></i>

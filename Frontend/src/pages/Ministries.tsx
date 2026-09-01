@@ -1,43 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-
-const ministries = [
-  {
-    id: 'love-fellowship',
-    title: 'Love Fellowship',
-    icon: 'fa-heart',
-    color: '#ef4444',
-    description: 'Everything starts from this sub-ministry which seeks to bring young people together to regularly meet and spur themselves unto love and good works.',
-    details: 'Wherever young people are found — whether in communal settlements, schools, universities, or offices — Love Fellowships are located. All Teens Aloud members belong to a Love Fellowship, making it the heartbeat of our community.',
-  },
-  {
-    id: 'camp-vista',
-    title: 'Camp Vista',
-    icon: 'fa-campground',
-    color: '#16a34a',
-    description: 'Camps are a powerful means of re-igniting passions, building strong social networks, and challenging worldviews.',
-    details: 'Camp Vista builds and organizes camps for young people across the world with the aim of creating an atmosphere of change through interaction — interaction with the Word of God and with other friends.',
-  },
-  {
-    id: 'sermon-on-the-sofa',
-    title: 'Sermon On The Sofa',
-    icon: 'fa-couch',
-    color: '#8b5cf6',
-    description: 'A unique entertainment package in Secondary Schools — hilarious, edifying, and educational evangelistic events.',
-    details: 'Developed in 2007, Sermon on the Sofa is a mixed-bag evangelistic event intended to reach teens through a modern, relevant, and entertaining format. Starting from Ghana in Achimota School, it has since spread to schools across multiple countries.',
-  },
-  {
-    id: 'sportstronic',
-    title: 'Sportstronic',
-    icon: 'fa-futbol',
-    color: '#f59e0b',
-    description: 'Reaching young people through sports, games, and experiential learning methods.',
-    details: 'Sportstronic believes in harnessing the abundant energies of young people through sports and games. It uses athletics and team-building activities as a platform for mentorship, discipleship, and community building.',
-  },
-];
+import { usePageContent, useMinistries } from '../hooks/usePageContent';
 
 const Ministries = () => {
   const [user, setUser] = useState<any>(null);
+  const { getTitle, getBody } = usePageContent('ministries');
+  const { ministries } = useMinistries();
+  
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
@@ -48,10 +17,10 @@ const Ministries = () => {
       <section style={styles.hero}>
         <h1 style={styles.heroTitle}>
           <i className="fa-solid fa-church" style={{ marginRight: '0.5rem' }}></i>
-          Our Ministries
+          {getTitle('hero', 'Our Ministries')}
         </h1>
         <p style={styles.heroSubtitle}>
-          We are a Non-Denominational Christian fellowship with the vision to challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.
+          {getBody('hero', 'We are a Non-Denominational Christian fellowship with the vision to challenge a young generation to believe in their gifted purpose and passionately pursue Jesus Christ.')}
         </p>
       </section>
 
@@ -70,9 +39,9 @@ const Ministries = () => {
 
       {/* CTA */}
       <section style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Want to be part of what God is doing?</h2>
+        <h2 style={styles.ctaTitle}>{getTitle('cta', 'Want to be part of what God is doing?')}</h2>
         <p style={styles.ctaText}>
-          Whether you're a teen, young adult, or someone who believes in the potential of young people — there's a place for you here.
+          {getBody('cta', "Whether you're a teen, young adult, or someone who believes in the potential of young people — there's a place for you here.")}
         </p>
         <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           {user ? (

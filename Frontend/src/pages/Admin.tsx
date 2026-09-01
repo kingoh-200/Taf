@@ -970,6 +970,14 @@ const ContentManager = () => {
     hours: 'Office Hours',
     mission: 'Mission Statement',
     vision: 'Vision Statement',
+    about: 'About Section',
+    who_we_are: 'Who We Are',
+    founder: 'Founder Name',
+    founder_bio: 'Founder Bio',
+    countries: 'Countries List',
+    cta: 'Call to Action',
+    ministries_intro: 'Ministries Introduction',
+    list: 'Ministries List (JSON)',
   };
 
   // Specialized fields for contact page
@@ -1208,15 +1216,10 @@ const ContentManager = () => {
 
           {/* Ministries Editor */}
           {activePage === 'ministries' && (
-            <div style={{ marginBottom: '2rem' }}>
-              <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
-                <i className="fa-solid fa-church" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
-                Ministries Content
-              </h3>
-              <p style={{ color: 'var(--text-light)', margin: '0 0 1rem', fontSize: '0.9rem' }}>
-                Edit the main sections of your Ministries page. Individual ministry items are managed separately.
-              </p>
-            </div>
+            <MinistriesEditor
+              editedContent={editedContent}
+              updateField={updateField}
+            />
           )}
 
           {/* Other sections (for non-contact pages or non-specialized sections) */}
@@ -1287,6 +1290,213 @@ const ContentManager = () => {
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+// ===== MINISTRIES EDITOR =====
+const MinistriesEditor = ({ editedContent, updateField }: { editedContent: Record<string, { title: string; body: string }>; updateField: (key: string, field: 'title' | 'body', value: string) => void }) => {
+  const [ministries, setMinistries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ id: '', title: '', icon: 'fa-heart', color: '#ef4444', description: '', details: '' });
+
+  const defaultMinistries = [
+    { id: 'love-fellowship', title: 'Love Fellowship', icon: 'fa-heart', color: '#ef4444', description: 'Everything starts from this sub-ministry which seeks to bring young people together to regularly meet and spur themselves unto love and good works.', details: 'Wherever young people are found — whether in communal settlements, schools, universities, or offices — Love Fellowships are located. All Teens Aloud members belong to a Love Fellowship, making it the heartbeat of our community.' },
+    { id: 'camp-vista', title: 'Camp Vista', icon: 'fa-campground', color: '#16a34a', description: 'Camps are a powerful means of re-igniting passions, building strong social networks, and challenging worldviews.', details: 'Camp Vista builds and organizes camps for young people across the world with the aim of creating an atmosphere of change through interaction — interaction with the Word of God and with other friends.' },
+    { id: 'sermon-on-the-sofa', title: 'Sermon On The Sofa', icon: 'fa-couch', color: '#8b5cf6', description: 'A unique entertainment package in Secondary Schools — hilarious, edifying, and educational evangelistic events.', details: 'Developed in 2007, Sermon on the Sofa is a mixed-bag evangelistic event intended to reach teens through a modern, relevant, and entertaining format.' },
+    { id: 'sportstronic', title: 'Sportstronic', icon: 'fa-futbol', color: '#f59e0b', description: 'Reaching young people through sports, games, and experiential learning methods.', details: 'Sportstronic believes in harnessing the abundant energies of young people through sports and games.' },
+  ];
+
+  useEffect(() => {
+    // Load ministries from content or use defaults
+    const listSection = editedContent.list;
+    if (listSection && listSection.body) {
+      try {
+        const parsed = JSON.parse(listSection.body);
+        if (Array.isArray(parsed)) {
+          setMinistries(parsed);
+          setLoading(false);
+          return;
+        }
+      } catch {}
+    }
+    setMinistries(defaultMinistries);
+    setLoading(false);
+  }, [editedContent.list]);
+
+  const saveMinistries = (newList: any[]) => {
+    setMinistries(newList);
+    updateField('list', 'body', JSON.stringify(newList));
+  };
+
+  const startEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditForm({ ...ministries[index] });
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+  };
+
+  const handleSaveMinistry = () => {
+    if (editingIndex === null) return;
+    const newList = [...ministries];
+    newList[editingIndex] = editForm;
+    saveMinistries(newList);
+    setEditingIndex(null);
+  };
+
+  const handleAddMinistry = () => {
+    const newMinistry = {
+      id: 'ministry-' + Date.now(),
+      title: 'New Ministry',
+      icon: 'fa-star',
+      color: '#00A0DC',
+      description: 'Description of the ministry...',
+      details: 'Detailed information about this ministry...',
+    };
+    saveMinistries([...ministries, newMinistry]);
+    setEditingIndex(ministries.length);
+    setEditForm(newMinistry);
+  };
+
+  const handleDeleteMinistry = (index: number) => {
+    if (!confirm('Delete this ministry?')) return;
+    const newList = ministries.filter((_, i) => i !== index);
+    saveMinistries(newList);
+    setEditingIndex(null);
+  };
+
+  const iconOptions = [
+    'fa-heart', 'fa-campground', 'fa-couch', 'fa-futbol', 'fa-book-open',
+    'fa-music', 'fa-microphone', 'fa-palette', 'fa-code', 'fa-graduation-cap',
+    'fa-hands-praying', 'fa-dove', 'fa-cross', 'fa-church', 'fa-bible',
+  ];
+
+  const colorOptions = ['#ef4444', '#16a34a', '#8b5cf6', '#f59e0b', '#00A0DC', '#ec4899', '#06b6d4', '#f97316'];
+
+  if (loading) return <p style={{ color: 'var(--text-muted)' }}>Loading ministries...</p>;
+
+  return (
+    <div style={{ marginBottom: '2rem' }}>
+      <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
+        <i className="fa-solid fa-church" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+        Manage Ministries
+      </h3>
+      <p style={{ color: 'var(--text-light)', margin: '0 0 1rem', fontSize: '0.9rem' }}>
+        Add, edit, or remove ministries. Changes appear on Home and Ministries pages.
+      </p>
+
+      {/* Ministry list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {ministries.map((m, index) => (
+          <div key={m.id} style={{ background: 'var(--bg-alt)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            {editingIndex === index ? (
+              <div style={{ padding: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.8rem', color: 'var(--primary)' }}>
+                  <i className="fa-solid fa-pen" style={{ marginRight: '0.4rem' }}></i>
+                  Edit Ministry
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Title</label>
+                    <input
+                      type="text"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Icon</label>
+                    <select
+                      value={editForm.icon}
+                      onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                    >
+                      {iconOptions.map((icon) => (
+                        <option key={icon} value={icon}>{icon}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: '0.8rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Color</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setEditForm({ ...editForm, color })}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          background: color,
+                          border: editForm.color === color ? '3px solid var(--text)' : '2px solid var(--border)',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '0.8rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Short Description</label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={2}
+                    style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
+                </div>
+                <div style={{ marginBottom: '0.8rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Full Details</label>
+                  <textarea
+                    value={editForm.details}
+                    onChange={(e) => setEditForm({ ...editForm, details: e.target.value })}
+                    rows={3}
+                    style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={handleSaveMinistry} className="btn" style={{ flex: 1 }}>
+                    <i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save Ministry
+                  </button>
+                  <button onClick={cancelEdit} style={{ ...deleteBtnStyle, flex: 1, background: 'var(--bg)', color: 'var(--text-light)' }}>
+                    <i className="fa-solid fa-times" style={{ marginRight: '0.3rem' }}></i>Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className={`fa-solid ${m.icon}`} style={{ color: m.color, fontSize: '1.1rem' }}></i>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text)' }}>{m.title}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{m.description.slice(0, 60)}...</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button onClick={() => startEdit(index)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)' }} title="Edit">
+                    <i className="fa-solid fa-pen"></i>
+                  </button>
+                  <button onClick={() => handleDeleteMinistry(index)} style={deleteBtnStyle} title="Delete">
+                    <i className="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add Ministry Button */}
+      <button
+        onClick={handleAddMinistry}
+        style={{ marginTop: '1rem', padding: '0.6rem 1rem', borderRadius: 10, border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-light)', cursor: 'pointer', fontSize: '0.9rem', width: '100%' }}
+      >
+        <i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>Add New Ministry
+      </button>
     </div>
   );
 };
