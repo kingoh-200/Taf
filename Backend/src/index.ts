@@ -113,11 +113,19 @@ async function initializeDatabase() {
         url TEXT NOT NULL,
         thumbnail_url TEXT,
         caption VARCHAR(500),
+        category VARCHAR(50) DEFAULT 'general',
         like_count INTEGER DEFAULT 0,
         save_count INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+    // Add category column if missing (for existing databases)
+    await db.raw(`
+      DO $$ BEGIN
+        ALTER TABLE gallery_items ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'general';
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$
     `);
     await db.raw(`
       CREATE TABLE IF NOT EXISTS gallery_likes (
