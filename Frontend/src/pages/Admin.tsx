@@ -4,7 +4,7 @@ import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'content';
+type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'messages' | 'content';
 
 const Admin = () => {
   useDocumentTitle('Admin Dashboard');
@@ -28,6 +28,7 @@ const Admin = () => {
     { key: 'users', label: 'Users', icon: 'fa-user-gear' },
     { key: 'subscribers', label: 'Subscribers', icon: 'fa-envelope-open-text' },
     { key: 'email', label: 'Send Email', icon: 'fa-paper-plane' },
+    { key: 'messages', label: 'Messages', icon: 'fa-envelope-open' },
     { key: 'content', label: 'Content', icon: 'fa-pen-to-square' },
   ];
 
@@ -63,6 +64,7 @@ const Admin = () => {
       {activeTab === 'users' && <UsersManager />}
       {activeTab === 'subscribers' && <SubscribersManager />}
       {activeTab === 'email' && <EmailSender />}
+      {activeTab === 'messages' && <ContactMessagesManager />}
       {activeTab === 'content' && <ContentManager />}
     </div>
   );
@@ -772,6 +774,22 @@ const EmailSender = () => {
 
   return (
     <div>
+      {/* SMTP Configuration Notice */}
+      <div style={{ padding: '0.8rem 1rem', borderRadius: 10, background: 'rgba(247,148,29,0.1)', border: '1px solid rgba(247,148,29,0.3)', marginBottom: '1.5rem', fontSize: '0.85rem', color: 'var(--text)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', fontWeight: 600 }}>
+          <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--accent)' }}></i>
+          Email requires SMTP configuration
+        </div>
+        <p style={{ margin: '0 0 0.3rem', color: 'var(--text-light)', fontSize: '0.8rem' }}>
+          Set these environment variables in Render:
+        </p>
+        <code style={{ display: 'block', padding: '0.4rem 0.6rem', borderRadius: 6, background: 'rgba(0,0,0,0.05)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+          SMTP_USER=your-gmail@gmail.com<br />
+          SMTP_PASS=your-gmail-app-password<br />
+          <span style={{ color: 'var(--text-muted)' }}># Get app password at myaccount.google.com/apppasswords</span>
+        </code>
+      </div>
+
       <form onSubmit={handleSend} className="card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ marginBottom: '1rem' }}><i className="fa-solid fa-paper-plane" style={{ marginRight: '0.4rem' }}></i>Compose Email</h3>
 
@@ -892,11 +910,9 @@ const ContentManager = () => {
 
   const pages = [
     { key: 'contact', label: 'Contact Page', icon: 'fa-envelope' },
-    { key: 'home', label: 'Home Page', icon: 'fa-house' },
     { key: 'about', label: 'About Page', icon: 'fa-info-circle' },
     { key: 'ministries', label: 'Ministries', icon: 'fa-church' },
     { key: 'footer', label: 'Footer', icon: 'fa-shoe-prints' },
-    { key: 'navbar', label: 'Navigation', icon: 'fa-bars' },
   ];
 
   const load = () => {
@@ -1291,6 +1307,108 @@ const ContentManager = () => {
             {saveMsg && <span style={{ color: saveMsg === 'Saved!' ? 'var(--success)' : 'var(--error)', fontSize: '0.9rem', fontWeight: 500 }}>{saveMsg}</span>}
           </div>
         </>
+      )}
+    </div>
+  );
+};
+
+// ===== CONTACT MESSAGES MANAGER =====
+const ContactMessagesManager = () => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    api.get('/contact')
+      .then((res) => setMessages(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
+
+  const markRead = async (id: number) => {
+    await api.put(`/contact/${id}/read`);
+    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, is_read: true } : m));
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Delete this message?')) {
+      await api.delete(`/contact/${id}`);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    }
+  };
+
+  if (loading) return <div className="loading"><i className="fa-solid fa-spinner fa-spin"></i> Loading messages...</div>;
+
+  const unreadCount = messages.filter((m) => !m.is_read).length;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0 }}>
+          <i className="fa-solid fa-envelope-open" style={{ marginRight: '0.4rem', color: 'var(--primary)' }}></i>
+          Contact Messages
+        </h3>
+        {unreadCount > 0 && (
+          <span style={{ padding: '0.2rem 0.6rem', borderRadius: 12, background: 'var(--error)', color: '#fff', fontSize: '0.75rem', fontWeight: 600 }}>
+            {unreadCount} unread
+          </span>
+        )}
+      </div>
+      <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+        Messages sent through the contact form on your website.
+      </p>
+
+      {messages.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+          <i className="fa-solid fa-envelope-open" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}></i>
+          No messages yet.
+        </p>
+      ) : (
+        messages.map((msg) => (
+          <div
+            key={msg.id}
+            className="card"
+            style={{
+              marginBottom: '0.75rem',
+              borderLeft: msg.is_read ? '3px solid var(--border)' : '3px solid var(--primary)',
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              setExpandedId(expandedId === msg.id ? null : msg.id);
+              if (!msg.is_read) markRead(msg.id);
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  {!msg.is_read && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }}></span>}
+                  <h4 style={{ margin: 0, fontWeight: msg.is_read ? 400 : 600 }}>{msg.subject}</h4>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                  <i className="fa-solid fa-user" style={{ marginRight: '0.3rem' }}></i>{msg.name}
+                  <span style={{ margin: '0 0.4rem' }}>•</span>
+                  <i className="fa-solid fa-envelope" style={{ marginRight: '0.2rem' }}></i>{msg.email}
+                  <span style={{ margin: '0 0.4rem' }}>•</span>
+                  {new Date(msg.created_at).toLocaleString()}
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
+                style={{ ...deleteBtnStyle, flexShrink: 0 }}
+                title="Delete"
+              >
+                <i className="fa-solid fa-trash"></i>
+              </button>
+            </div>
+            {expandedId === msg.id && (
+              <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: 'var(--bg-alt)', borderRadius: 8, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {msg.message}
+              </div>
+            )}
+          </div>
+        ))
       )}
     </div>
   );

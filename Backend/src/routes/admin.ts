@@ -191,16 +191,21 @@ router.post('/send-email', authenticate, adminOnly, async (req: AuthRequest, res
       }
     }
 
+    if (recipients.length === 0) {
+      return res.status(400).json({ error: 'No recipients found. Add subscribers or ensure members have email addresses.' });
+    }
+
     // Send emails to all recipients
     const html = buildEmailHtml(subject, body);
     let sentCount = 0;
     let failedCount = 0;
+    let lastError = '';
     const htmlForEmail = html;
 
     for (const recipient of recipients) {
       const result = await sendEmail({ to: recipient.email, subject, html: htmlForEmail });
       if (result.success) sentCount++;
-      else failedCount++;
+      else { failedCount++; lastError = result.error || ''; }
     }
 
     const status = failedCount === 0 ? 'sent' : sentCount === 0 ? 'failed' : 'partial';
@@ -213,8 +218,14 @@ router.post('/send-email', authenticate, adminOnly, async (req: AuthRequest, res
       status,
     }).returning('*');
 
+    // Build helpful response message
+    let message = `${sentCount} email(s) sent${failedCount > 0 ? `, ${failedCount} failed` : ''}.`;
+    if (failedCount > 0 && lastError) {
+      message += ` Error: ${lastError}`;
+    }
+
     res.status(201).json({
-      message: `${sentCount} email(s) sent${failedCount > 0 ? `, ${failedCount} failed` : ''}.`,
+      message,
       log,
       recipients: recipients.map((r) => r.email),
     });

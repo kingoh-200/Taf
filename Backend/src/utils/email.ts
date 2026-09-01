@@ -20,8 +20,9 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('⚠️ SMTP not configured — email not sent to', to);
-    return { success: false, error: 'SMTP not configured' };
+    const msg = 'SMTP not configured. Set SMTP_USER and SMTP_PASS environment variables.';
+    console.warn('⚠️', msg, '— email not sent to', to);
+    return { success: false, error: msg };
   }
 
   try {
@@ -32,11 +33,18 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
       subject,
       html,
     });
-    console.log('✉️ Email sent:', info.messageId);
+    console.log('✉️ Email sent to', to, ':', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
-    console.error('✉️ Email send error:', error.message, error.code);
-    return { success: false, error: error.message || 'Unknown email error' };
+    console.error('✉️ Email send error to', to, ':', error.message, error.code);
+    // Provide helpful error messages
+    let helpfulMsg = error.message || 'Unknown email error';
+    if (error.code === 'EAUTH') {
+      helpfulMsg = 'Gmail authentication failed. Use a Gmail App Password (not your regular password). Go to myaccount.google.com/apppasswords to create one.';
+    } else if (error.code === 'ECONNREFUSED') {
+      helpfulMsg = 'Could not connect to SMTP server. Check SMTP_HOST and SMTP_PORT.';
+    }
+    return { success: false, error: helpfulMsg };
   }
 }
 
