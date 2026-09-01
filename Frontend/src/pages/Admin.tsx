@@ -684,6 +684,34 @@ const ContentManager = () => {
     vision: 'Vision Statement',
   };
 
+  // Specialized fields for contact page
+  const contactFields = [
+    { key: 'email', label: 'Email Address', icon: 'fa-envelope', placeholder: 'info@teensaloud.com' },
+    { key: 'phone', label: 'Phone Number', icon: 'fa-phone', placeholder: '+254 700 000 000' },
+    { key: 'address', label: 'Address', icon: 'fa-location-dot', placeholder: 'Nairobi, Kenya' },
+    { key: 'website', label: 'Website', icon: 'fa-globe', placeholder: 'teensaloud.com' },
+    { key: 'facebook', label: 'Facebook URL', icon: 'fa-brands fa-facebook-f', placeholder: 'https://facebook.com/teensaloud' },
+    { key: 'twitter', label: 'Twitter/X URL', icon: 'fa-brands fa-x-twitter', placeholder: 'https://twitter.com/teensaloud' },
+    { key: 'instagram', label: 'Instagram URL', icon: 'fa-brands fa-instagram', placeholder: 'https://instagram.com/teensaloud' },
+    { key: 'youtube', label: 'YouTube URL', icon: 'fa-brands fa-youtube', placeholder: 'https://youtube.com/teensaloud' },
+  ];
+
+  // Get or initialize contact info data
+  const getContactInfo = () => {
+    if (!editedContent.info) return {};
+    try {
+      return JSON.parse(editedContent.info.body || '{}');
+    } catch {
+      return {};
+    }
+  };
+
+  const updateContactInfo = (field: string, value: string) => {
+    const currentInfo = getContactInfo();
+    const newInfo = { ...currentInfo, [field]: value };
+    updateField('info', 'body', JSON.stringify(newInfo));
+  };
+
   return (
     <div>
       <h2 style={{ margin: '0 0 1rem' }}>
@@ -718,52 +746,185 @@ const ContentManager = () => {
         <p style={{ color: 'var(--text-muted)' }}>Loading content...</p>
       ) : (
         <>
-          {/* Sections */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {Object.entries(editedContent).map(([key, data]) => (
-              <div key={key} style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1.2rem', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {key}
-                    </span>
-                    {sectionLabels[key] && (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
-                        — {sectionLabels[key]}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => removeSection(key)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem 0.4rem' }}
-                    title="Remove section"
-                  >
-                    <i className="fa-solid fa-trash" style={{ fontSize: '0.8rem' }}></i>
-                  </button>
-                </div>
+          {/* Specialized Contact Page Editor */}
+          {activePage === 'contact' && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
+                <i className="fa-solid fa-address-card" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+                Contact Information
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                {contactFields.map((field) => {
+                  const info = getContactInfo();
+                  return (
+                    <div key={field.key} style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1rem', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                        <i className={`fa-solid ${field.icon}`} style={{ color: 'var(--primary)', fontSize: '1rem' }}></i>
+                        <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)' }}>{field.label}</label>
+                      </div>
+                      <input
+                        type="text"
+                        value={info[field.key] || ''}
+                        onChange={(e) => updateContactInfo(field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Title</label>
-                    <input
-                      type="text"
-                      value={data.title}
-                      onChange={(e) => updateField(key, 'title', e.target.value)}
-                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Content</label>
-                    <textarea
-                      value={data.body}
-                      onChange={(e) => updateField(key, 'body', e.target.value)}
-                      rows={4}
-                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
-                    />
-                  </div>
+          {/* Hero Section (for all pages) */}
+          {editedContent.hero && (
+            <div style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1.2rem', border: '1px solid var(--border)', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    hero
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                    — Hero / Header
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeSection('hero')}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem 0.4rem' }}
+                  title="Remove section"
+                >
+                  <i className="fa-solid fa-trash" style={{ fontSize: '0.8rem' }}></i>
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Title</label>
+                  <input
+                    type="text"
+                    value={editedContent.hero.title}
+                    onChange={(e) => updateField('hero', 'title', e.target.value)}
+                    style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Subtitle</label>
+                  <textarea
+                    value={editedContent.hero.body}
+                    onChange={(e) => updateField('hero', 'body', e.target.value)}
+                    rows={2}
+                    style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
                 </div>
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Office Hours Section (for contact page) */}
+          {activePage === 'contact' && editedContent.hours && (
+            <div style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1.2rem', border: '1px solid var(--border)', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    hours
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                    — Office Hours
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeSection('hours')}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem 0.4rem' }}
+                  title="Remove section"
+                >
+                  <i className="fa-solid fa-trash" style={{ fontSize: '0.8rem' }}></i>
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.8rem' }}>
+                {[
+                  { key: 'weekdays', label: 'Weekdays', placeholder: 'Monday - Friday' },
+                  { key: 'weekdayTime', label: 'Weekday Hours', placeholder: '8:00 AM - 5:00 PM' },
+                  { key: 'saturday', label: 'Saturday', placeholder: 'Saturday' },
+                  { key: 'saturdayTime', label: 'Saturday Hours', placeholder: '9:00 AM - 1:00 PM' },
+                  { key: 'sunday', label: 'Sunday', placeholder: 'Sunday' },
+                  { key: 'sundayTime', label: 'Sunday Hours', placeholder: 'Closed' },
+                ].map((field) => {
+                  let hoursData: Record<string, string> = {};
+                  try {
+                    hoursData = JSON.parse(editedContent.hours.body || '{}');
+                  } catch {}
+                  return (
+                    <div key={field.key}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>{field.label}</label>
+                      <input
+                        type="text"
+                        value={hoursData[field.key] || ''}
+                        onChange={(e) => {
+                          const newHours = { ...hoursData, [field.key]: e.target.value };
+                          updateField('hours', 'body', JSON.stringify(newHours));
+                        }}
+                        placeholder={field.placeholder}
+                        style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Other sections (for non-contact pages or non-specialized sections) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {Object.entries(editedContent)
+              .filter(([key]) => {
+                // Skip sections we've already rendered specialized UIs for
+                if (activePage === 'contact' && ['hero', 'info', 'hours'].includes(key)) return false;
+                if (activePage !== 'contact' && key === 'hero') return false; // Hero rendered above
+                return true;
+              })
+              .map(([key, data]) => (
+                <div key={key} style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1.2rem', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {key}
+                      </span>
+                      {sectionLabels[key] && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                          — {sectionLabels[key]}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => removeSection(key)}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem 0.4rem' }}
+                      title="Remove section"
+                    >
+                      <i className="fa-solid fa-trash" style={{ fontSize: '0.8rem' }}></i>
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Title</label>
+                      <input
+                        type="text"
+                        value={data.title}
+                        onChange={(e) => updateField(key, 'title', e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Content</label>
+                      <textarea
+                        value={data.body}
+                        onChange={(e) => updateField(key, 'body', e.target.value)}
+                        rows={4}
+                        style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
           </div>
 
           {/* Actions */}

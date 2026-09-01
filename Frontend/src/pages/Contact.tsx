@@ -25,10 +25,21 @@ const Contact = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, []);  // Parse contact info from JSON body
+  let info: Record<string, string> = {};
+  try {
+    info = content.info ? JSON.parse(content.info.body || '{}') : {};
+  } catch {
+    info = {};
+  }
 
-  const info = content.info ? JSON.parse(content.info.body || '{}') : {};
-  const hours = content.hours ? JSON.parse(content.hours.body || '{}') : {};
+  // Parse office hours from JSON body
+  let hours: Record<string, string> = {};
+  try {
+    hours = content.hours ? JSON.parse(content.hours.body || '{}') : {};
+  } catch {
+    hours = {};
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,18 +203,29 @@ const Contact = () => {
                 Follow Us
               </h3>
               <div style={s.socialGrid}>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" style={s.socialLink}>
-                  <i className="fa-brands fa-facebook-f" style={{ fontSize: '1.2rem' }}></i>
-                </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={s.socialLink}>
-                  <i className="fa-brands fa-x-twitter" style={{ fontSize: '1.2rem' }}></i>
-                </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style={s.socialLink}>
-                  <i className="fa-brands fa-instagram" style={{ fontSize: '1.2rem' }}></i>
-                </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" style={s.socialLink}>
-                  <i className="fa-brands fa-youtube" style={{ fontSize: '1.2rem' }}></i>
-                </a>
+                {info.facebook && (
+                  <a href={info.facebook} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
+                    <i className="fa-brands fa-facebook-f" style={{ fontSize: '1.2rem' }}></i>
+                  </a>
+                )}
+                {info.twitter && (
+                  <a href={info.twitter} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
+                    <i className="fa-brands fa-x-twitter" style={{ fontSize: '1.2rem' }}></i>
+                  </a>
+                )}
+                {info.instagram && (
+                  <a href={info.instagram} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
+                    <i className="fa-brands fa-instagram" style={{ fontSize: '1.2rem' }}></i>
+                  </a>
+                )}
+                {info.youtube && (
+                  <a href={info.youtube} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
+                    <i className="fa-brands fa-youtube" style={{ fontSize: '1.2rem' }}></i>
+                  </a>
+                )}
+                {!info.facebook && !info.twitter && !info.instagram && !info.youtube && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No social links configured yet.</p>
+                )}
               </div>
             </div>
 
@@ -217,7 +239,8 @@ const Contact = () => {
                 <a href="/about" style={s.quickLink}><i className="fa-solid fa-info-circle" style={{ marginRight: '0.4rem' }}></i>About Us</a>
                 <a href="/ministries" style={s.quickLink}><i className="fa-solid fa-church" style={{ marginRight: '0.4rem' }}></i>Ministries</a>
                 <a href="/events" style={s.quickLink}><i className="fa-solid fa-calendar" style={{ marginRight: '0.4rem' }}></i>Events</a>
-                <a href="/register" style={s.quickLink}><i className="fa-solid fa-user-plus" style={{ marginRight: '0.4rem' }}></i>Join Us</a>
+                <a href="/gallery" style={s.quickLink}><i className="fa-solid fa-images" style={{ marginRight: '0.4rem' }}></i>Gallery</a>
+                <a href="/members" style={s.quickLink}><i className="fa-solid fa-users" style={{ marginRight: '0.4rem' }}></i>Members</a>
               </div>
             </div>
           </div>
