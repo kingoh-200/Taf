@@ -41,11 +41,16 @@ const Navbar = () => {
     }
   }, []);
 
-  // Read user from localStorage on mount only
+  // Read user from localStorage on mount + route changes
+  // This ensures navbar updates after login/logout
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
+    if (stored) {
+      try { setUser(JSON.parse(stored)); } catch { setUser(null); }
+    } else {
+      setUser(null);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
