@@ -86,6 +86,46 @@ export const createGalleryItem = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Update a gallery item (owner or admin only)
+export const updateGalleryItem = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+    const { caption, category } = req.body;
+
+    const item = await db('gallery_items').where({ id }).first();
+    if (!item) return res.status(404).json({ error: 'Item not found.' });
+
+    if (item.user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized.' });
+    }
+
+    await db('gallery_items').where({ id }).update({
+      caption: caption !== undefined ? caption : item.caption,
+      category: category !== undefined ? category : item.category,
+      updated_at: new Date(),
+    });
+
+    // Return updated item with user info
+    const updatedItem = await db('gallery_items')
+      .select(
+        'gallery_items.*',
+        'users.username',
+        'users.name as author_name',
+        'users.profile_image as author_image',
+      )
+      .leftJoin('users', 'gallery_items.user_id', 'users.id')
+      .where('gallery_items.id', id)
+      .first();
+
+    res.json(updatedItem);
+  } catch (error) {
+    console.error('Update gallery item error:', error);
+    res.status(500).json({ error: 'Failed to update item.' });
+  }
+};
+
 // Delete a gallery item (owner or admin only)
 export const deleteGalleryItem = async (req: AuthRequest, res: Response) => {
   try {

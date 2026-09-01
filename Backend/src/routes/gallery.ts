@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getGalleryItems, createGalleryItem, deleteGalleryItem, toggleLike, toggleSave, getSavedItems, getComments, addComment, deleteComment } from '../controllers/galleryController';
+import { getGalleryItems, createGalleryItem, updateGalleryItem, deleteGalleryItem, toggleLike, toggleSave, getSavedItems, getComments, addComment, deleteComment } from '../controllers/galleryController';
 import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = Router();
@@ -9,6 +9,9 @@ router.get('/', optionalAuth, getGalleryItems);
 
 // Protected: upload new item
 router.post('/', authenticate, createGalleryItem);
+
+// Protected: update item (owner or admin)
+router.put('/:id', authenticate, updateGalleryItem);
 
 // Protected: delete item (owner or admin)
 router.delete('/:id', authenticate, deleteGalleryItem);

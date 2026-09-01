@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
 
-type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'users' | 'subscribers' | 'email' | 'content';
+type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'content';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const Admin = () => {
     { key: 'events', label: 'Events', icon: 'fa-calendar-days' },
     { key: 'announcements', label: 'Updates', icon: 'fa-bullhorn' },
     { key: 'members', label: 'Members', icon: 'fa-users' },
+    { key: 'gallery', label: 'Gallery', icon: 'fa-images' },
     { key: 'users', label: 'Users', icon: 'fa-user-gear' },
     { key: 'subscribers', label: 'Subscribers', icon: 'fa-envelope-open-text' },
     { key: 'email', label: 'Send Email', icon: 'fa-paper-plane' },
@@ -56,6 +57,7 @@ const Admin = () => {
       {activeTab === 'events' && <EventsManager />}
       {activeTab === 'announcements' && <AnnouncementsManager />}
       {activeTab === 'members' && <MembersManager />}
+      {activeTab === 'gallery' && <GalleryManager />}
       {activeTab === 'users' && <UsersManager />}
       {activeTab === 'subscribers' && <SubscribersManager />}
       {activeTab === 'email' && <EmailSender />}
@@ -108,6 +110,8 @@ const OverviewPanel = () => {
 const EventsManager = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [form, setForm] = useState({ title: '', description: '', event_date: '', location: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '', event_date: '', location: '' });
 
   const load = () => api.get('/events').then((res) => setEvents(res.data));
   useEffect(() => { load(); }, []);
@@ -124,6 +128,28 @@ const EventsManager = () => {
       await api.delete(`/events/${id}`);
       load();
     }
+  };
+
+  const startEdit = (event: Event) => {
+    setEditingId(event.id);
+    setEditForm({
+      title: event.title,
+      description: event.description || '',
+      event_date: event.event_date.slice(0, 16), // Format for datetime-local input
+      location: event.location || '',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId === null) return;
+    await api.put(`/events/${editingId}`, editForm);
+    setEditingId(null);
+    load();
   };
 
   return (
@@ -146,14 +172,45 @@ const EventsManager = () => {
       </form>
 
       {events.map((event) => (
-        <div key={event.id} className="card" style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h4>{event.title}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-              {new Date(event.event_date).toLocaleString()} • {event.location || 'No location'}
-            </p>
-          </div>
-          <button onClick={() => handleDelete(event.id)} style={deleteBtnStyle}><i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Delete</button>
+        <div key={event.id} className="card" style={{ marginBottom: '0.75rem' }}>
+          {editingId === event.id ? (
+            <form onSubmit={handleUpdate} style={{ padding: '0.5rem' }}>
+              <h4 style={{ marginBottom: '0.8rem', color: 'var(--primary)' }}><i className="fa-solid fa-pen" style={{ marginRight: '0.4rem' }}></i>Edit Event</h4>
+              <div className="form-group">
+                <input placeholder="Title" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <textarea placeholder="Description" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <input type="datetime-local" value={editForm.event_date} onChange={(e) => setEditForm({ ...editForm, event_date: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <input placeholder="Location" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+                <button type="submit" className="btn" style={{ flex: 1 }}><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save</button>
+                <button type="button" onClick={cancelEdit} style={{ ...deleteBtnStyle, flex: 1, background: 'var(--bg-alt)', color: 'var(--text-light)' }}><i className="fa-solid fa-times" style={{ marginRight: '0.3rem' }}></i>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h4>{event.title}</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                  {new Date(event.event_date).toLocaleString()} • {event.location || 'No location'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button onClick={() => startEdit(event)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)' }} title="Edit">
+                  <i className="fa-solid fa-pen"></i>
+                </button>
+                <button onClick={() => handleDelete(event.id)} style={deleteBtnStyle} title="Delete">
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -164,6 +221,8 @@ const EventsManager = () => {
 const AnnouncementsManager = () => {
   const [items, setItems] = useState<Announcement[]>([]);
   const [form, setForm] = useState({ title: '', content: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', content: '' });
 
   const load = () => api.get('/announcements').then((res) => setItems(res.data));
   useEffect(() => { load(); }, []);
@@ -187,6 +246,23 @@ const AnnouncementsManager = () => {
     load();
   };
 
+  const startEdit = (item: Announcement) => {
+    setEditingId(item.id);
+    setEditForm({ title: item.title, content: item.content });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId === null) return;
+    await api.put(`/announcements/${editingId}`, editForm);
+    setEditingId(null);
+    load();
+  };
+
   return (
     <div>
       <form onSubmit={handleCreate} className="card" style={{ marginBottom: '1.5rem' }}>
@@ -202,18 +278,39 @@ const AnnouncementsManager = () => {
 
       {items.map((item) => (
         <div key={item.id} className="card" style={{ marginBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h4>{item.is_pinned ? <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: 'var(--accent)' }}></i> : ''}{item.title}</h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{item.content.slice(0, 100)}...</p>
+          {editingId === item.id ? (
+            <form onSubmit={handleUpdate} style={{ padding: '0.5rem' }}>
+              <h4 style={{ marginBottom: '0.8rem', color: 'var(--primary)' }}><i className="fa-solid fa-pen" style={{ marginRight: '0.4rem' }}></i>Edit Announcement</h4>
+              <div className="form-group">
+                <input placeholder="Title" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <textarea placeholder="Content" value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} required rows={4} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+                <button type="submit" className="btn" style={{ flex: 1 }}><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save</button>
+                <button type="button" onClick={cancelEdit} style={{ ...deleteBtnStyle, flex: 1, background: 'var(--bg-alt)', color: 'var(--text-light)' }}><i className="fa-solid fa-times" style={{ marginRight: '0.3rem' }}></i>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h4>{item.is_pinned ? <i className="fa-solid fa-thumbtack" style={{ marginRight: '0.3rem', color: 'var(--accent)' }}></i> : ''}{item.title}</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{item.content.slice(0, 100)}...</p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button onClick={() => handlePin(item.id, !!item.is_pinned)} style={{ ...deleteBtnStyle, background: item.is_pinned ? '#fef3c7' : 'var(--bg-alt)', color: item.is_pinned ? '#92400e' : 'var(--text-light)' }} title={item.is_pinned ? 'Unpin' : 'Pin'}>
+                  <i className="fa-solid fa-thumbtack"></i>
+                </button>
+                <button onClick={() => startEdit(item)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)' }} title="Edit">
+                  <i className="fa-solid fa-pen"></i>
+                </button>
+                <button onClick={() => handleDelete(item.id)} style={deleteBtnStyle} title="Delete">
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button onClick={() => handlePin(item.id, !!item.is_pinned)} style={{ ...deleteBtnStyle, background: item.is_pinned ? '#fef3c7' : 'var(--bg-alt)', color: item.is_pinned ? '#92400e' : 'var(--text-light)' }} title={item.is_pinned ? 'Unpin' : 'Pin'}>
-                <i className="fa-solid fa-thumbtack"></i>
-              </button>
-              <button onClick={() => handleDelete(item.id)} style={deleteBtnStyle}><i className="fa-solid fa-trash"></i></button>
-            </div>
-          </div>
+          )}
         </div>
       ))}
     </div>
@@ -224,6 +321,8 @@ const AnnouncementsManager = () => {
 const MembersManager = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [form, setForm] = useState({ name: '', role: '', bio: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', role: '', bio: '' });
 
   const load = () => api.get('/members').then((res) => setMembers(res.data));
   useEffect(() => { load(); }, []);
@@ -240,6 +339,27 @@ const MembersManager = () => {
       await api.delete(`/members/${id}`);
       load();
     }
+  };
+
+  const startEdit = (member: Member) => {
+    setEditingId(member.id);
+    setEditForm({
+      name: member.name,
+      role: member.role || '',
+      bio: member.bio || '',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId === null) return;
+    await api.put(`/members/${editingId}`, editForm);
+    setEditingId(null);
+    load();
   };
 
   return (
@@ -259,14 +379,179 @@ const MembersManager = () => {
       </form>
 
       {members.map((member) => (
-        <div key={member.id} className="card" style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h4>{member.name}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{member.role || 'Member'}</p>
-          </div>
-          <button onClick={() => handleDelete(member.id)} style={deleteBtnStyle}><i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Delete</button>
+        <div key={member.id} className="card" style={{ marginBottom: '0.75rem' }}>
+          {editingId === member.id ? (
+            <form onSubmit={handleUpdate} style={{ padding: '0.5rem' }}>
+              <h4 style={{ marginBottom: '0.8rem', color: 'var(--primary)' }}><i className="fa-solid fa-pen" style={{ marginRight: '0.4rem' }}></i>Edit Member</h4>
+              <div className="form-group">
+                <input placeholder="Name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <input placeholder="Role (e.g. President)" value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <textarea placeholder="Bio" value={editForm.bio} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} rows={3} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+                <button type="submit" className="btn" style={{ flex: 1 }}><i className="fa-solid fa-check" style={{ marginRight: '0.3rem' }}></i>Save</button>
+                <button type="button" onClick={cancelEdit} style={{ ...deleteBtnStyle, flex: 1, background: 'var(--bg-alt)', color: 'var(--text-light)' }}><i className="fa-solid fa-times" style={{ marginRight: '0.3rem' }}></i>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h4>{member.name}</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{member.role || 'Member'}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button onClick={() => startEdit(member)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)' }} title="Edit">
+                  <i className="fa-solid fa-pen"></i>
+                </button>
+                <button onClick={() => handleDelete(member.id)} style={deleteBtnStyle} title="Delete">
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
+    </div>
+  );
+};
+
+// ===== GALLERY MANAGER =====
+const GalleryManager = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ caption: '', category: 'general' });
+
+  const categories = ['general', 'events', 'ministries', 'fellowship', 'outreach', 'workshops'];
+
+  const load = () => {
+    setLoading(true);
+    api.get('/gallery')
+      .then((res) => setItems(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Delete this gallery item?')) {
+      await api.delete(`/gallery/${id}`);
+      load();
+    }
+  };
+
+  const startEdit = (item: any) => {
+    setEditingId(item.id);
+    setEditForm({
+      caption: item.caption || '',
+      category: item.category || 'general',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId === null) return;
+    await api.put(`/gallery/${editingId}`, editForm);
+    setEditingId(null);
+    load();
+  };
+
+  if (loading) return <div className="loading"><i className="fa-solid fa-spinner fa-spin"></i> Loading gallery...</div>;
+
+  return (
+    <div>
+      <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+        <i className="fa-solid fa-info-circle" style={{ marginRight: '0.3rem' }}></i>
+        Edit captions, categories, or delete gallery items.
+      </p>
+
+      {items.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+          <i className="fa-solid fa-images" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}></i>
+          No gallery items yet.
+        </p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          {items.map((item) => (
+            <div key={item.id} style={{ background: 'var(--bg-alt)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+              {/* Thumbnail */}
+              <div style={{ height: 180, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {item.type === 'video' ? (
+                  <i className="fa-solid fa-video" style={{ fontSize: '2rem', color: 'var(--text-muted)' }}></i>
+                ) : (
+                  <img src={item.thumbnail_url || item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+              </div>
+
+              {/* Edit form or display */}
+              {editingId === item.id ? (
+                <form onSubmit={handleUpdate} style={{ padding: '0.8rem' }}>
+                  <div className="form-group" style={{ marginBottom: '0.6rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Caption</label>
+                    <input
+                      type="text"
+                      value={editForm.caption}
+                      onChange={(e) => setEditForm({ ...editForm, caption: e.target.value })}
+                      placeholder="Add a caption..."
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: '0.8rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Category</label>
+                    <select
+                      value={editForm.category}
+                      onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                      style={{ width: '100%', padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button type="submit" className="btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}><i className="fa-solid fa-check" style={{ marginRight: '0.2rem' }}></i>Save</button>
+                    <button type="button" onClick={cancelEdit} style={{ ...deleteBtnStyle, flex: 1, padding: '0.4rem', fontSize: '0.8rem', background: 'var(--bg)', color: 'var(--text-light)' }}><i className="fa-solid fa-times" style={{ marginRight: '0.2rem' }}></i>Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <div style={{ padding: '0.8rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text)', marginBottom: '0.3rem', fontWeight: 500 }}>
+                    {item.caption || 'No caption'}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: 12, background: 'var(--primary)', color: '#fff', textTransform: 'capitalize' }}>
+                      {item.category || 'general'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <i className="fa-solid fa-heart" style={{ marginRight: '0.2rem' }}></i>{item.like_count || 0}
+                      <span style={{ marginLeft: '0.5rem' }}><i className="fa-solid fa-bookmark" style={{ marginRight: '0.2rem' }}></i>{item.save_count || 0}</span>
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                    by {item.author_name || item.username} • {new Date(item.created_at).toLocaleDateString()}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button onClick={() => startEdit(item)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)', flex: 1, padding: '0.35rem', fontSize: '0.8rem' }} title="Edit">
+                      <i className="fa-solid fa-pen" style={{ marginRight: '0.2rem' }}></i>Edit
+                    </button>
+                    <button onClick={() => handleDelete(item.id)} style={{ ...deleteBtnStyle, flex: 1, padding: '0.35rem', fontSize: '0.8rem' }} title="Delete">
+                      <i className="fa-solid fa-trash" style={{ marginRight: '0.2rem' }}></i>Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -607,6 +892,9 @@ const ContentManager = () => {
     { key: 'contact', label: 'Contact Page', icon: 'fa-envelope' },
     { key: 'home', label: 'Home Page', icon: 'fa-house' },
     { key: 'about', label: 'About Page', icon: 'fa-info-circle' },
+    { key: 'ministries', label: 'Ministries', icon: 'fa-church' },
+    { key: 'footer', label: 'Footer', icon: 'fa-shoe-prints' },
+    { key: 'navbar', label: 'Navigation', icon: 'fa-bars' },
   ];
 
   const load = () => {
@@ -872,12 +1160,72 @@ const ContentManager = () => {
             </div>
           )}
 
+          {/* Footer Editor */}
+          {activePage === 'footer' && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
+                <i className="fa-solid fa-shoe-prints" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+                Footer Content
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                {[
+                  { key: 'copyright', label: 'Copyright Text', icon: 'fa-copyright', placeholder: '© 2026 Teens Aloud Foundation' },
+                  { key: 'tagline', label: 'Tagline', icon: 'fa-quote-left', placeholder: 'Empowering Teens. Building Futures.' },
+                  { key: 'email', label: 'Contact Email', icon: 'fa-envelope', placeholder: 'info@teensaloud.com' },
+                  { key: 'phone', label: 'Contact Phone', icon: 'fa-phone', placeholder: '+254 700 000 000' },
+                  { key: 'address', label: 'Address', icon: 'fa-location-dot', placeholder: 'Nairobi, Kenya' },
+                  { key: 'facebook', label: 'Facebook URL', icon: 'fa-brands fa-facebook-f', placeholder: 'https://facebook.com/teensaloud' },
+                  { key: 'twitter', label: 'Twitter URL', icon: 'fa-brands fa-x-twitter', placeholder: 'https://twitter.com/teensaloud' },
+                  { key: 'instagram', label: 'Instagram URL', icon: 'fa-brands fa-instagram', placeholder: 'https://instagram.com/teensaloud' },
+                  { key: 'youtube', label: 'YouTube URL', icon: 'fa-brands fa-youtube', placeholder: 'https://youtube.com/teensaloud' },
+                ].map((field) => {
+                  let footerData: Record<string, string> = {};
+                  try {
+                    footerData = JSON.parse(editedContent.footer?.body || '{}');
+                  } catch {}
+                  return (
+                    <div key={field.key} style={{ background: 'var(--bg-alt)', borderRadius: 12, padding: '1rem', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                        <i className={`fa-solid ${field.icon}`} style={{ color: 'var(--primary)', fontSize: '1rem' }}></i>
+                        <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)' }}>{field.label}</label>
+                      </div>
+                      <input
+                        type="text"
+                        value={footerData[field.key] || ''}
+                        onChange={(e) => {
+                          const newFooter = { ...footerData, [field.key]: e.target.value };
+                          updateField('footer', 'body', JSON.stringify(newFooter));
+                        }}
+                        placeholder={field.placeholder}
+                        style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.9rem' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Ministries Editor */}
+          {activePage === 'ministries' && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
+                <i className="fa-solid fa-church" style={{ marginRight: '0.5rem', color: 'var(--primary)' }}></i>
+                Ministries Content
+              </h3>
+              <p style={{ color: 'var(--text-light)', margin: '0 0 1rem', fontSize: '0.9rem' }}>
+                Edit the main sections of your Ministries page. Individual ministry items are managed separately.
+              </p>
+            </div>
+          )}
+
           {/* Other sections (for non-contact pages or non-specialized sections) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {Object.entries(editedContent)
               .filter(([key]) => {
                 // Skip sections we've already rendered specialized UIs for
                 if (activePage === 'contact' && ['hero', 'info', 'hours'].includes(key)) return false;
+                if (activePage === 'footer' && key === 'footer') return false;
                 if (activePage !== 'contact' && key === 'hero') return false; // Hero rendered above
                 return true;
               })
