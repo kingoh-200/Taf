@@ -12,6 +12,7 @@ import { profileRoutes } from './routes/profile';
 import { galleryRoutes } from './routes/gallery';
 import { adminRoutes } from './routes/admin';
 import { contentRoutes } from './routes/content';
+import { contactRoutes } from './routes/contact';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -24,8 +25,8 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true,
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -36,6 +37,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

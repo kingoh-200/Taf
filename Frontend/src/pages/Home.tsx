@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { cachedGet } from '../api/client';
 import type { Event, Announcement } from '../api/types';
 import { usePageContent, useMinistries } from '../hooks/usePageContent';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface GalleryItem {
   id: number;
@@ -17,6 +18,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import NewsletterForm from '../components/NewsletterForm';
 
 const Home = () => {
+  useDocumentTitle('Home');
   const [events, setEvents] = useState<Event[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [memberCount, setMemberCount] = useState(0);

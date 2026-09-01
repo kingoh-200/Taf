@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'content';
 
 const Admin = () => {
+  useDocumentTitle('Admin Dashboard');
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 

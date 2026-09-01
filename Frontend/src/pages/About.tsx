@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { usePageContent } from '../hooks/usePageContent';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const About = () => {
+  useDocumentTitle('About');
   const [user, setUser] = useState<any>(null);
   const { getTitle, getBody } = usePageContent('about');
   

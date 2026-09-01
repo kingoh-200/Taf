@@ -5,6 +5,7 @@ import { processImage } from '../utils/imageProcessor';
 import { GalleryItemSkeleton } from '../components/Skeleton';
 import NewItemsBanner from '../components/NewItemsBanner';
 import { useRealtimePolling } from '../hooks/useRealtimePolling';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface GalleryItem {
   id: number;
@@ -46,6 +47,7 @@ const CATEGORIES = [
 ];
 
 const Gallery = () => {
+  useDocumentTitle('Gallery');
   const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 30000 });
   const [optimisticItems, setOptimisticItems] = useState<Map<number, Partial<GalleryItem>>>(new Map());
   const items = polledItems.map((item) => {

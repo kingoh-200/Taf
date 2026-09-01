@@ -41,10 +41,11 @@ const Navbar = () => {
     }
   }, []);
 
+  // Read user from localStorage on mount only
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

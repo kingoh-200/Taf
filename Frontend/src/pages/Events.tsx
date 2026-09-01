@@ -4,8 +4,10 @@ import { EventCardSkeleton } from '../components/Skeleton';
 import NewItemsBanner from '../components/NewItemsBanner';
 import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import EventCalendar from '../components/EventCalendar';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const Events = () => {
+  useDocumentTitle('Events');
   const { data: events, loading, newCount, acceptNew } = useRealtimePolling<Event[]>('/events', [], { interval: 30000 });
   const [view, setView] = useState<'grid' | 'calendar'>('grid');
 

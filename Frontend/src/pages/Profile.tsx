@@ -4,6 +4,7 @@ import api from '../api/client';
 import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const ProfileProjects = ({ userId }: { userId: number }) => {
   const [projects, setProjects] = useState<any[]>([]);
@@ -139,6 +140,7 @@ const ProfileAchievements = ({ userId }: { userId: number }) => {
 };
 
 const Profile = () => {
+  useDocumentTitle('My Profile');
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [editing, setEditing] = useState(false);

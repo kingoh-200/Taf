@@ -5,6 +5,7 @@ import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface MemberData {
   id: string | number;
@@ -38,6 +39,7 @@ const MembersSkeleton = () => (
 
 /** Split view wrapper — shows member list on left, profile on right */
 const MembersSplitView = () => {
+  useDocumentTitle('Members');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 30000 });

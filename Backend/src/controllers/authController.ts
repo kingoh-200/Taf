@@ -37,9 +37,11 @@ export const register = async (req: Request, res: Response) => {
       .returning(['id', 'username', 'name', 'email', 'role', 'title', 'department', 'location', 'skills', 'social_link', 'is_active']);
 
     const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) throw new Error('JWT_SECRET not configured');
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'secret',
+      jwtSecret,
       { expiresIn } as SignOptions
     );
 
@@ -99,9 +101,11 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) throw new Error('JWT_SECRET not configured');
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'secret',
+      jwtSecret,
       { expiresIn } as SignOptions
     );
 

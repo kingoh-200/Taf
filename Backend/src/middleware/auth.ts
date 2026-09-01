@@ -1,6 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+// Enforce JWT_SECRET — crash on startup if missing
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not set. Cannot verify tokens.');
+  }
+  return secret;
+}
+
 export interface AuthRequest extends Request {
   user?: {
     id: number;
@@ -23,7 +32,7 @@ export const authenticate = (
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded as { id: number; username: string; role: string };
     next();
   } catch {
@@ -41,7 +50,7 @@ export const optionalAuth = (
   if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
       const token = authHeader.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+      const decoded = jwt.verify(token, getJwtSecret());
       req.user = decoded as { id: number; username: string; role: string };
     } catch {}
   }
