@@ -43,7 +43,6 @@ const MembersSplitView = () => {
   const { data: members, loading, newCount, acceptNew } = useRealtimePolling<MemberData[]>('/members', [], { interval: 30000 });
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
   const [search, setSearch] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'member'>('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
@@ -54,18 +53,17 @@ const MembersSplitView = () => {
         m.name.toLowerCase().includes(search.toLowerCase()) ||
         (m.role && m.role.toLowerCase().includes(search.toLowerCase())) ||
         (m.skills && m.skills.toLowerCase().includes(search.toLowerCase()));
-      const matchesRole = filterRole === 'all' || m.role === filterRole;
       const matchesDept = filterDepartment === 'all' || m.department === filterDepartment;
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'active' && m.is_active !== false) ||
         (filterStatus === 'inactive' && m.is_active === false);
-      return matchesSearch && matchesRole && matchesDept && matchesStatus;
+      return matchesSearch && matchesDept && matchesStatus;
     }).sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       return a.name.localeCompare(b.name);
     });
-  }, [members, search, filterRole, filterDepartment, filterStatus, sortBy]);
+  }, [members, search, filterDepartment, filterStatus, sortBy]);
 
   const activeCount = members.filter((m) => m.is_active !== false).length;
   const departments = [...new Set(members.map((m) => m.department).filter(Boolean))] as string[];
@@ -130,14 +128,7 @@ const MembersSplitView = () => {
                 <input type="text" placeholder="Search members..." value={search} onChange={(e) => setSearch(e.target.value)} style={s.searchInput} />
               </div>
               <div style={s.filtersRow}>
-                <div style={s.selectWrap}>
-                  <i className="fa-solid fa-user" style={s.filterIcon}></i>
-                  <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as any)} style={s.select}>
-                    <option value="all">Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="member">Member</option>
-                  </select>
-                </div>
+
                 <div style={s.selectWrap}>
                   <i className="fa-solid fa-building" style={s.filterIcon}></i>
                   <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} style={s.select}>
