@@ -571,13 +571,24 @@ footer .bottom-link:hover {
 
 /* Masonry gallery grid */
 .masonry-grid {
-  columns: 3;
+  columns: 4;
   column-gap: 1rem;
+  margin-top: 1rem;
 }
 
 .masonry-grid .masonry-item {
   break-inside: avoid;
   margin-bottom: 1rem;
+}
+
+.masonry-grid .masonry-item:hover .masonry-item > div:first-child > div:last-child {
+  opacity: 1;
+}
+
+@media (max-width: 1200px) {
+  .masonry-grid {
+    columns: 3;
+  }
 }
 
 @media (max-width: 900px) {
@@ -588,7 +599,11 @@ footer .bottom-link:hover {
 
 @media (max-width: 640px) {
   .masonry-grid {
-    columns: 1;
+    columns: 2;
+    column-gap: 0.6rem;
+  }
+  .masonry-grid .masonry-item {
+    margin-bottom: 0.6rem;
   }
 }
 

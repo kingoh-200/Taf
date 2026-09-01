@@ -6,16 +6,22 @@ import { AuthRequest } from '../middleware/auth';
 export const getGalleryItems = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const { category } = req.query;
 
-    const items = await db('gallery_items')
+    let query = db('gallery_items')
       .select(
         'gallery_items.*',
         'users.username',
         'users.name as author_name',
         'users.profile_image as author_image',
       )
-      .leftJoin('users', 'gallery_items.user_id', 'users.id')
-      .orderBy('gallery_items.created_at', 'desc');
+      .leftJoin('users', 'gallery_items.user_id', 'users.id');
+
+    if (category && category !== 'all') {
+      query = query.where('gallery_items.category', category);
+    }
+
+    const items = await query.orderBy('gallery_items.created_at', 'desc');
 
     // If user is logged in, check which items they've liked/saved
     let likedIds: number[] = [];
@@ -43,7 +49,7 @@ export const getGalleryItems = async (req: AuthRequest, res: Response) => {
 // Upload a new gallery item
 export const createGalleryItem = async (req: AuthRequest, res: Response) => {
   try {
-    const { url, thumbnail_url, type, caption } = req.body;
+    const { url, thumbnail_url, type, caption, category } = req.body;
     const userId = req.user!.id;
 
     if (!url) {
@@ -57,6 +63,7 @@ export const createGalleryItem = async (req: AuthRequest, res: Response) => {
         thumbnail_url: thumbnail_url || null,
         type: type || 'image',
         caption: caption || null,
+        category: category || 'general',
       })
       .returning('*');
 
