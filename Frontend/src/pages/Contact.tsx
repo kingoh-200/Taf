@@ -27,20 +27,14 @@ const Contact = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);  // Parse contact info from JSON body
+  }, []);
+
+  // Parse contact info from JSON body
   let info: Record<string, string> = {};
   try {
     info = content.info ? JSON.parse(content.info.body || '{}') : {};
   } catch {
     info = {};
-  }
-
-  // Parse office hours from JSON body
-  let hours: Record<string, string> = {};
-  try {
-    hours = content.hours ? JSON.parse(content.hours.body || '{}') : {};
-  } catch {
-    hours = {};
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,28 +176,6 @@ const Contact = () => {
 
           {/* Sidebar */}
           <div style={s.sidebar}>
-            {/* Office Hours */}
-            <div style={s.sideCard}>
-              <h3 style={s.sideTitle}>
-                <i className="fa-solid fa-clock" style={{ marginRight: '0.4rem' }}></i>
-                {content.hours?.title || 'Office Hours'}
-              </h3>
-              <div style={s.hoursList}>
-                <div style={s.hoursRow}>
-                  <span style={s.hoursDay}>{hours.weekdays || 'Monday - Friday'}</span>
-                  <span style={s.hoursTime}>{hours.weekdayTime || '8:00 AM - 5:00 PM'}</span>
-                </div>
-                <div style={s.hoursRow}>
-                  <span style={s.hoursDay}>{hours.saturday || 'Saturday'}</span>
-                  <span style={s.hoursTime}>{hours.saturdayTime || '9:00 AM - 1:00 PM'}</span>
-                </div>
-                <div style={s.hoursRow}>
-                  <span style={s.hoursDay}>{hours.sunday || 'Sunday'}</span>
-                  <span style={s.hoursTime}>{hours.sundayTime || 'Closed'}</span>
-                </div>
-              </div>
-            </div>
-
             {/* Social Links */}
             <div style={s.sideCard}>
               <h3 style={s.sideTitle}>
@@ -211,6 +183,9 @@ const Contact = () => {
                 Follow Us
               </h3>
               <div style={s.socialGrid}>
+                <a href="https://www.instagram.com/teensaloud" target="_blank" rel="noopener noreferrer" style={s.socialLink}>
+                  <i className="fa-brands fa-instagram" style={{ fontSize: '1.2rem' }}></i>
+                </a>
                 {info.facebook && (
                   <a href={info.facebook} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
                     <i className="fa-brands fa-facebook-f" style={{ fontSize: '1.2rem' }}></i>
@@ -221,7 +196,7 @@ const Contact = () => {
                     <i className="fa-brands fa-x-twitter" style={{ fontSize: '1.2rem' }}></i>
                   </a>
                 )}
-                {info.instagram && (
+                {info.instagram && info.instagram !== 'https://www.instagram.com/teensaloud' && (
                   <a href={info.instagram} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
                     <i className="fa-brands fa-instagram" style={{ fontSize: '1.2rem' }}></i>
                   </a>
@@ -230,9 +205,6 @@ const Contact = () => {
                   <a href={info.youtube} target="_blank" rel="noopener noreferrer" style={s.socialLink}>
                     <i className="fa-brands fa-youtube" style={{ fontSize: '1.2rem' }}></i>
                   </a>
-                )}
-                {!info.facebook && !info.twitter && !info.instagram && !info.youtube && (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No social links configured yet.</p>
                 )}
               </div>
             </div>
