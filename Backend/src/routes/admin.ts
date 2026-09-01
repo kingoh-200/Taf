@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Response } from 'express';
 import db from '../db';
 import { AuthRequest, authenticate } from '../middleware/auth';
-import { sendEmail, buildEmailHtml } from '../utils/email';
+import { sendEmail, buildEmailHtml, verifySmtp } from '../utils/email';
 
 const router = Router();
 
@@ -232,6 +232,34 @@ router.post('/send-email', authenticate, adminOnly, async (req: AuthRequest, res
   } catch (error) {
     console.error('Send email error:', error);
     res.status(500).json({ error: 'Failed to send email.' });
+  }
+});
+
+// ===== SMTP HEALTH CHECK =====
+router.get('/email-check', authenticate, adminOnly, async (_req: AuthRequest, res: Response) => {
+  try {
+    const result = await verifySmtp();
+    res.json(result);
+  } catch (error: any) {
+    res.json({ configured: false, connected: false, error: error.message });
+  }
+});
+
+// ===== TEST EMAIL =====
+router.post('/email-test', authenticate, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required.' });
+
+    const result = await sendEmail({
+      to: email,
+      subject: 'Test Email from Teens Aloud Foundation',
+      html: buildEmailHtml('Test Email', 'This is a test email. If you received this, email is working correctly!'),
+    });
+
+    res.json(result);
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
   }
 });
 

@@ -772,22 +772,88 @@ const EmailSender = () => {
     }
   };
 
+  // SMTP diagnostic state
+  const [smtpStatus, setSmtpStatus] = useState<{ configured: boolean; connected: boolean; error?: string } | null>(null);
+  const [smtpChecking, setSmtpChecking] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ success?: boolean; error?: string } | null>(null);
+
+  const checkSmtp = async () => {
+    setSmtpChecking(true);
+    try {
+      const res = await api.get('/admin/email-check');
+      setSmtpStatus(res.data);
+    } catch {
+      setSmtpStatus({ configured: false, connected: false, error: 'Failed to check SMTP status.' });
+    }
+    setSmtpChecking(false);
+  };
+
+  const sendTestEmail = async () => {
+    if (!testEmail.trim()) return;
+    setTestSending(true);
+    setTestResult(null);
+    try {
+      const res = await api.post('/admin/email-test', { email: testEmail.trim() });
+      setTestResult(res.data);
+    } catch (err: any) {
+      setTestResult({ success: false, error: err?.response?.data?.error || 'Failed to send test.' });
+    }
+    setTestSending(false);
+  };
+
   return (
     <div>
-      {/* SMTP Configuration Notice */}
-      <div style={{ padding: '0.8rem 1rem', borderRadius: 10, background: 'rgba(247,148,29,0.1)', border: '1px solid rgba(247,148,29,0.3)', marginBottom: '1.5rem', fontSize: '0.85rem', color: 'var(--text)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', fontWeight: 600 }}>
-          <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--accent)' }}></i>
-          Email requires SMTP configuration
+      {/* SMTP Diagnostic Panel */}
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.8rem' }}>
+          <i className="fa-solid fa-wrench" style={{ color: 'var(--primary)' }}></i>
+          <h3 style={{ margin: 0, fontSize: '1rem' }}>Email Diagnostics</h3>
         </div>
-        <p style={{ margin: '0 0 0.3rem', color: 'var(--text-light)', fontSize: '0.8rem' }}>
-          Set these environment variables in Render:
-        </p>
-        <code style={{ display: 'block', padding: '0.4rem 0.6rem', borderRadius: 6, background: 'rgba(0,0,0,0.05)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
-          SMTP_USER=your-gmail@gmail.com<br />
-          SMTP_PASS=your-gmail-app-password<br />
-          <span style={{ color: 'var(--text-muted)' }}># Get app password at myaccount.google.com/apppasswords</span>
-        </code>
+
+        <button onClick={checkSmtp} disabled={smtpChecking} style={{ padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-alt)', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}>
+          {smtpChecking ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Checking...</> : <><i className="fa-solid fa-plug" style={{ marginRight: '0.3rem' }}></i>Check SMTP Connection</>}
+        </button>
+
+        {smtpStatus && (
+          <div style={{ marginTop: '0.8rem', padding: '0.7rem', borderRadius: 8, background: smtpStatus.connected ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', border: `1px solid ${smtpStatus.connected ? 'rgba(22,163,74,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: smtpStatus.connected ? 'var(--success)' : 'var(--error)', marginBottom: '0.3rem' }}>
+              {smtpStatus.connected ? <><i className="fa-solid fa-circle-check" style={{ marginRight: '0.3rem' }}></i>SMTP Connected Successfully!</> : <><i className="fa-solid fa-circle-xmark" style={{ marginRight: '0.3rem' }}></i>SMTP Connection Failed</>}
+            </div>
+            {smtpStatus.error && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', fontFamily: 'monospace', padding: '0.3rem 0.5rem', borderRadius: 4, background: 'rgba(0,0,0,0.03)', marginTop: '0.3rem' }}>
+                {smtpStatus.error}
+              </div>
+            )}
+            {!smtpStatus.configured && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.3rem' }}>
+                Set <code>SMTP_USER</code> and <code>SMTP_PASS</code> in Render env vars.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Test email */}
+        {smtpStatus?.connected && (
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="email"
+              placeholder="Send test to email..."
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              style={{ flex: 1, minWidth: 200, padding: '0.5rem 0.7rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '0.85rem' }}
+            />
+            <button onClick={sendTestEmail} disabled={testSending || !testEmail.trim()} className="btn" style={{ fontSize: '0.8rem' }}>
+              {testSending ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Sending...</> : <><i className="fa-solid fa-paper-plane" style={{ marginRight: '0.3rem' }}></i>Send Test</>}
+            </button>
+          </div>
+        )}
+        {testResult && (
+          <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.7rem', borderRadius: 8, background: testResult.success ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', fontSize: '0.8rem', color: testResult.success ? 'var(--success)' : 'var(--error)' }}>
+            {testResult.success ? <><i className="fa-solid fa-circle-check" style={{ marginRight: '0.3rem' }}></i>Test email sent! Check your inbox.</> : <><i className="fa-solid fa-circle-xmark" style={{ marginRight: '0.3rem' }}></i>{testResult.error}</>}
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSend} className="card" style={{ marginBottom: '1.5rem' }}>

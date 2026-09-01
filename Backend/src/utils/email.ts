@@ -48,6 +48,31 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   }
 }
 
+/**
+ * Verify SMTP connection — useful for debugging.
+ * Call from admin endpoint to check if email is configured correctly.
+ */
+export async function verifySmtp(): Promise<{ configured: boolean; connected: boolean; error?: string }> {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!user || !pass) {
+    return { configured: false, connected: false, error: 'SMTP_USER and/or SMTP_PASS not set.' };
+  }
+
+  try {
+    const transporter = getTransporter();
+    await transporter.verify();
+    return { configured: true, connected: true };
+  } catch (error: any) {
+    return {
+      configured: true,
+      connected: false,
+      error: error.message || 'Unknown error',
+    };
+  }
+}
+
 export function buildEmailHtml(subject: string, body: string): string {
   return `
     <!DOCTYPE html>
