@@ -249,10 +249,14 @@ const Home = () => {
               const d = new Date(event.event_date);
               return (
                 <div key={event.id} style={s.eventCard}>
-                  <div style={s.eventDateBox}>
-                    <span style={s.eventMonth}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
-                    <span style={s.eventDay}>{d.getDate()}</span>
-                  </div>
+                  {event.image_url ? (
+                    <img src={event.image_url} alt={event.title} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                  ) : (
+                    <div style={s.eventDateBox}>
+                      <span style={s.eventMonth}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
+                      <span style={s.eventDay}>{d.getDate()}</span>
+                    </div>
+                  )}
                   <div style={s.eventInfo}>
                     <h3 style={s.eventTitle}>{event.title}</h3>
                     {event.location && (

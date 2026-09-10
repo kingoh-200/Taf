@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'messages' | 'content';
 
@@ -113,17 +114,36 @@ const OverviewPanel = () => {
 // ===== EVENTS MANAGER =====
 const EventsManager = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [form, setForm] = useState({ title: '', description: '', event_date: '', location: '' });
+  const [form, setForm] = useState({ title: '', description: '', event_date: '', location: '', image_url: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '', event_date: '', location: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', event_date: '', location: '', image_url: '' });
+  const [uploading, setUploading] = useState(false);
+  const [editUploading, setEditUploading] = useState(false);
 
   const load = () => api.get('/events').then((res) => setEvents(res.data));
   useEffect(() => { load(); }, []);
 
+  const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isEdit) setEditUploading(true); else setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, 'events');
+      if (isEdit) {
+        setEditForm((prev) => ({ ...prev, image_url: url }));
+      } else {
+        setForm((prev) => ({ ...prev, image_url: url }));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Upload failed');
+    }
+    if (isEdit) setEditUploading(false); else setUploading(false);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     await api.post('/events', form);
-    setForm({ title: '', description: '', event_date: '', location: '' });
+    setForm({ title: '', description: '', event_date: '', location: '', image_url: '' });
     load();
   };
 
@@ -139,8 +159,9 @@ const EventsManager = () => {
     setEditForm({
       title: event.title,
       description: event.description || '',
-      event_date: event.event_date.slice(0, 16), // Format for datetime-local input
+      event_date: event.event_date.slice(0, 16),
       location: event.location || '',
+      image_url: event.image_url || '',
     });
   };
 
@@ -156,10 +177,42 @@ const EventsManager = () => {
     load();
   };
 
+  const posterUploadField = (isEdit: boolean) => {
+    const currentUrl = isEdit ? editForm.image_url : (form as any).image_url;
+    const uploadingNow = isEdit ? editUploading : uploading;
+    return (
+      <div className="form-group">
+        <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem', display: 'block' }}>
+          <i className="fa-solid fa-image" style={{ marginRight: '0.3rem' }}></i>Event Poster
+        </label>
+        {currentUrl ? (
+          <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+            <img src={currentUrl} alt="Event poster" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+            <button
+              type="button"
+              onClick={() => isEdit ? setEditForm((p) => ({ ...p, image_url: '' })) : setForm((p) => ({ ...p, image_url: '' }))}
+              style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 6, padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem' }}
+            ><i className="fa-solid fa-times"></i> Remove</button>
+          </div>
+        ) : (
+          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem', border: '2px dashed var(--border)', borderRadius: 8, cursor: 'pointer', background: 'var(--bg-alt)', color: 'var(--text-light)', fontSize: '0.85rem', transition: 'all 0.2s' }}>
+            {uploadingNow ? (
+              <><i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}></i>Uploading...</>
+            ) : (
+              <><i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', marginBottom: '0.4rem', color: 'var(--primary)' }}></i>Click to upload poster image</>
+            )}
+            <input type="file" accept="image/*" onChange={(e) => handlePosterUpload(e, isEdit)} style={{ display: 'none' }} disabled={uploadingNow} />
+          </label>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       <form onSubmit={handleCreate} className="card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ marginBottom: '1rem' }}><i className="fa-solid fa-plus-circle" style={{ marginRight: '0.4rem' }}></i>Add Event</h3>
+        {posterUploadField(false)}
         <div className="form-group">
           <input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         </div>
@@ -180,6 +233,7 @@ const EventsManager = () => {
           {editingId === event.id ? (
             <form onSubmit={handleUpdate} style={{ padding: '0.5rem' }}>
               <h4 style={{ marginBottom: '0.8rem', color: 'var(--primary)' }}><i className="fa-solid fa-pen" style={{ marginRight: '0.4rem' }}></i>Edit Event</h4>
+              {posterUploadField(true)}
               <div className="form-group">
                 <input placeholder="Title" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} required />
               </div>
@@ -198,14 +252,19 @@ const EventsManager = () => {
               </div>
             </form>
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4>{event.title}</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                  {new Date(event.event_date).toLocaleString()} • {event.location || 'No location'}
-                </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.8rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
+                {event.image_url && (
+                  <img src={event.image_url} alt={event.title} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <h4 style={{ margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+                    {new Date(event.event_date).toLocaleString()} • {event.location || 'No location'}
+                  </p>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                 <button onClick={() => startEdit(event)} style={{ ...deleteBtnStyle, background: 'rgba(0,160,220,0.1)', color: 'var(--primary)' }} title="Edit">
                   <i className="fa-solid fa-pen"></i>
                 </button>

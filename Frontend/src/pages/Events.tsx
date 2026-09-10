@@ -79,22 +79,27 @@ const Events = () => {
       ) : (
         <div className="grid-2" style={{ marginTop: '1rem' }}>
           {events.map((event) => (
-            <div key={event.id} className="card">
-              <h3>{event.title}</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
-                <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem', color: 'var(--primary)' }}></i>{new Date(event.event_date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-              {event.location && (
-                <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}><i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>{event.location}</p>
+            <div key={event.id} className="card" style={{ overflow: 'hidden', padding: 0 }}>
+              {event.image_url && (
+                <img src={event.image_url} alt={event.title} style={{ width: '100%', height: 200, objectFit: 'cover' }} />
               )}
-              {event.description && <p>{event.description}</p>}
+              <div style={{ padding: '1rem' }}>
+                <h3 style={{ marginTop: event.image_url ? 0 : undefined }}>{event.title}</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                  <i className="fa-solid fa-clock" style={{ marginRight: '0.3rem', color: 'var(--primary)' }}></i>{new Date(event.event_date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+                {event.location && (
+                  <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}><i className="fa-solid fa-location-dot" style={{ marginRight: '0.3rem' }}></i>{event.location}</p>
+                )}
+                {event.description && <p>{event.description}</p>}
+              </div>
             </div>
           ))}
         </div>
