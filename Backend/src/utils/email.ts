@@ -73,7 +73,22 @@ export async function verifySmtp(): Promise<{ configured: boolean; connected: bo
   }
 }
 
+// Escape HTML entities so admin text can't inject markup into emails
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function buildEmailHtml(subject: string, body: string): string {
+  // Strip newlines from the subject (also prevents SMTP header injection)
+  const safeSubject = escapeHtml(subject.replace(/[\r\n]+/g, ' '));
+  // Escape body, then convert line breaks to <br>
+  const safeBody = escapeHtml(body).replace(/\n/g, '<br>');
+
   return `
     <!DOCTYPE html>
     <html>
@@ -96,9 +111,9 @@ export function buildEmailHtml(subject: string, body: string): string {
               <!-- Body -->
               <tr>
                 <td style="padding:30px;">
-                  <h2 style="color:#1e293b; font-size:18px; margin:0 0 15px;">${subject}</h2>
+                  <h2 style="color:#1e293b; font-size:18px; margin:0 0 15px;">${safeSubject}</h2>
                   <div style="color:#475569; font-size:15px; line-height:1.7;">
-                    ${body.replace(/\n/g, '<br>')}
+                    ${safeBody}
                   </div>
                 </td>
               </tr>

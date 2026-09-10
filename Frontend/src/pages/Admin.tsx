@@ -404,7 +404,7 @@ const MembersManager = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: '', bio: '' });
 
-  const load = () => api.get('/members').then((res) => setMembers(res.data));
+  const load = () => api.get('/members').then((res) => setMembers((res.data as any[]).filter((m) => m.source !== 'user')));
   useEffect(() => { load(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {

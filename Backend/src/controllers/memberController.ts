@@ -2,6 +2,9 @@ import { Response } from 'express';
 import db from '../db';
 import { AuthRequest } from '../middleware/auth';
 
+// Admin email must never be exposed to the public members list
+const ADMIN_EMAIL = 'kingoina254@gmail.com';
+
 export const getAllMembers = async (_req: AuthRequest, res: Response) => {
   try {
     // Get manually added members
@@ -14,12 +17,15 @@ export const getAllMembers = async (_req: AuthRequest, res: Response) => {
       .select('id', 'username', 'name', 'email', 'role', 'profile_image', 'title', 'department', 'location', 'skills', 'social_link', 'is_active', 'created_at')
       .orderBy('created_at', 'desc');
 
-    // Combine both lists, marking the source
+    // Combine both lists, marking the source.
+    // Privacy rules:
+    //  - Hide the admin's email entirely
+    //  - Show everyone as "member" so admin status is never exposed
     const allMembers = [
       ...registeredUsers.map((u) => ({
         id: `user-${u.id}`,
         name: u.name || u.username,
-        role: u.role,
+        role: 'member',
         bio: null,
         image_url: u.profile_image,
         title: u.title,
@@ -27,7 +33,7 @@ export const getAllMembers = async (_req: AuthRequest, res: Response) => {
         location: u.location,
         skills: u.skills,
         social_link: u.social_link,
-        email: u.email,
+        email: u.email && u.email.toLowerCase() !== ADMIN_EMAIL ? u.email : null,
         is_active: u.is_active ?? true,
         created_at: u.created_at,
         source: 'user',

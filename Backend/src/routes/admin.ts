@@ -195,17 +195,31 @@ router.post('/send-email', authenticate, adminOnly, async (req: AuthRequest, res
       return res.status(400).json({ error: 'No recipients found. Add subscribers or ensure members have email addresses.' });
     }
 
-    // Send emails to all recipients
-    const html = buildEmailHtml(subject, body);
+    // Send emails to all recipients with limited concurrency (10 at a time)
+    // so large mailing lists don't time out the request.
+    const htmlForEmail = buildEmailHtml(subject, body);
     let sentCount = 0;
     let failedCount = 0;
     let lastError = '';
-    const htmlForEmail = html;
+    const CONCURRENCY = 10;
 
-    for (const recipient of recipients) {
-      const result = await sendEmail({ to: recipient.email, subject, html: htmlForEmail });
-      if (result.success) sentCount++;
-      else { failedCount++; lastError = result.error || ''; }
+    let cursor = 0;
+    const sendBatch = async () => {
+      const tasks: Promise<void>[] = [];
+      while (cursor < recipients.length && tasks.length < CONCURRENCY) {
+        const recipient = recipients[cursor++];
+        tasks.push(
+          sendEmail({ to: recipient.email, subject, html: htmlForEmail }).then((result) => {
+            if (result.success) sentCount++;
+            else { failedCount++; lastError = result.error || ''; }
+          })
+        );
+      }
+      await Promise.allSettled(tasks);
+    };
+
+    while (cursor < recipients.length) {
+      await sendBatch();
     }
 
     const status = failedCount === 0 ? 'sent' : sentCount === 0 ? 'failed' : 'partial';

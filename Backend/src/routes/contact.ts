@@ -1,7 +1,15 @@
 import { Router } from 'express';
 import db from '../db';
-import { optionalAuth, AuthRequest } from '../middleware/auth';
+import { optionalAuth, authenticate, AuthRequest } from '../middleware/auth';
 import { rateLimit } from '../middleware/rateLimit';
+
+// Admin-only check (reuses the authenticate middleware for token verification)
+const adminOnly = (req: AuthRequest, res: any, next: any) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only.' });
+  }
+  next();
+};
 
 const router = Router();
 
@@ -62,16 +70,8 @@ router.post('/', rateLimit(5, 60 * 1000), optionalAuth, async (req: AuthRequest,
 });
 
 // GET /api/contact — admin only, get all messages
-router.get('/', async (req: AuthRequest, res) => {
+router.get('/', authenticate, adminOnly, async (_req: AuthRequest, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Unauthorized.' });
-
-    const jwt = await import('jsonwebtoken');
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.default.verify(token, process.env.JWT_SECRET || '') as any;
-    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admin only.' });
-
     const messages = await db('contact_messages')
       .orderBy('created_at', 'desc')
       .limit(100);
@@ -83,16 +83,8 @@ router.get('/', async (req: AuthRequest, res) => {
 });
 
 // PUT /api/contact/:id/read — mark as read
-router.put('/:id/read', async (req: AuthRequest, res) => {
+router.put('/:id/read', authenticate, adminOnly, async (req: AuthRequest, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Unauthorized.' });
-
-    const jwt = await import('jsonwebtoken');
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.default.verify(token, process.env.JWT_SECRET || '') as any;
-    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admin only.' });
-
     await db('contact_messages').where({ id: req.params.id }).update({ is_read: true });
     res.json({ message: 'Marked as read.' });
   } catch (error) {
@@ -101,16 +93,8 @@ router.put('/:id/read', async (req: AuthRequest, res) => {
 });
 
 // DELETE /api/contact/:id — admin only
-router.delete('/:id', async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, adminOnly, async (req: AuthRequest, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Unauthorized.' });
-
-    const jwt = await import('jsonwebtoken');
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.default.verify(token, process.env.JWT_SECRET || '') as any;
-    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admin only.' });
-
     await db('contact_messages').where({ id: req.params.id }).del();
     res.json({ message: 'Deleted.' });
   } catch (error) {

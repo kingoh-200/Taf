@@ -11,6 +11,14 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Username and password are required.' });
     }
 
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+    }
+
+    if (username.length < 3 || username.length > 30) {
+      return res.status(400).json({ error: 'Username must be between 3 and 30 characters.' });
+    }
+
     // Check if username or email already exists
     const existingUsername = await db('users').where({ username }).first();
     if (existingUsername) {
