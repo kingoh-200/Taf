@@ -5,7 +5,21 @@ import Layout from './components/Layout';
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
+    // Prevent the browser from restoring the previous route's scroll position
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    // Temporarily disable CSS smooth scrolling so the jump is instant
+    // (otherwise it conflicts with React Router's scroll restoration)
+    const html = document.documentElement;
+    const prevBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
     window.scrollTo(0, 0);
+    html.scrollTop = 0;
+    document.body.scrollTop = 0;
+    requestAnimationFrame(() => {
+      html.style.scrollBehavior = prevBehavior;
+    });
   }, [pathname]);
   return null;
 }
