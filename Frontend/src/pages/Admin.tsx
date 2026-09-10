@@ -119,6 +119,8 @@ const EventsManager = () => {
   const [editForm, setEditForm] = useState({ title: '', description: '', event_date: '', location: '', image_url: '' });
   const [uploading, setUploading] = useState(false);
   const [editUploading, setEditUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [editUploadProgress, setEditUploadProgress] = useState(0);
 
   const load = () => api.get('/events').then((res) => setEvents(res.data));
   useEffect(() => { load(); }, []);
@@ -126,9 +128,12 @@ const EventsManager = () => {
   const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (isEdit) setEditUploading(true); else setUploading(true);
+    if (isEdit) { setEditUploading(true); setEditUploadProgress(0); } else { setUploading(true); setUploadProgress(0); }
     try {
-      const url = await uploadToCloudinary(file, 'events');
+      const url = await uploadToCloudinary(file, 'events', {
+        maxDimension: 1600,
+        onProgress: (p) => isEdit ? setEditUploadProgress(p) : setUploadProgress(p),
+      });
       if (isEdit) {
         setEditForm((prev) => ({ ...prev, image_url: url }));
       } else {
@@ -180,10 +185,16 @@ const EventsManager = () => {
   const posterUploadField = (isEdit: boolean) => {
     const currentUrl = isEdit ? editForm.image_url : (form as any).image_url;
     const uploadingNow = isEdit ? editUploading : uploading;
+    const progress = isEdit ? editUploadProgress : uploadProgress;
     return (
       <div className="form-group">
         <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem', display: 'block' }}>
           <i className="fa-solid fa-image" style={{ marginRight: '0.3rem' }}></i>Event Poster
+          {currentUrl && !uploadingNow && (
+            <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-light)', marginLeft: '0.5rem' }}>
+              <i className="fa-solid fa-crop-simple" style={{ marginRight: '0.2rem' }}></i>auto-cropped to fit
+            </span>
+          )}
         </label>
         {currentUrl ? (
           <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
@@ -197,7 +208,13 @@ const EventsManager = () => {
         ) : (
           <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem', border: '2px dashed var(--border)', borderRadius: 8, cursor: 'pointer', background: 'var(--bg-alt)', color: 'var(--text-light)', fontSize: '0.85rem', transition: 'all 0.2s' }}>
             {uploadingNow ? (
-              <><i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}></i>Uploading...</>
+              <>
+                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}></i>
+                <span style={{ marginBottom: '0.4rem' }}>{progress > 0 ? `Uploading... ${progress}%` : 'Compressing & uploading...'}</span>
+                <div style={{ width: '100%', maxWidth: 240, height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.max(progress, 4)}%`, background: 'var(--primary)', borderRadius: 3, transition: 'width 0.2s' }}></div>
+                </div>
+              </>
             ) : (
               <><i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', marginBottom: '0.4rem', color: 'var(--primary)' }}></i>Click to upload poster image</>
             )}

@@ -306,7 +306,7 @@ const Profile = () => {
                     try {
                       let imageUrl: string;
                       if (isCloudinaryConfigured) {
-                        imageUrl = await uploadToCloudinary(file, 'profiles');
+                        imageUrl = await uploadToCloudinary(file, 'profiles', { maxDimension: 800 });
                       } else {
                         imageUrl = await processImage(file, 400, 0.8);
                       }
