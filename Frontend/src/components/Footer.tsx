@@ -152,6 +152,10 @@ const Footer = () => {
               <a href="https://teensaloud.com" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>teensaloud.com</a>
             </p>
             <p style={styles.infoLine}>
+              <i className="fa-solid fa-code" style={styles.infoIcon}></i>
+              <a href="https://carlson-kingoina.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Developer Portfolio</a>
+            </p>
+            <p style={styles.infoLine}>
               <i className="fa-solid fa-envelope" style={styles.infoIcon}></i>
               info@teensaloud.org
             </p>
