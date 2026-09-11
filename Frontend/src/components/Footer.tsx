@@ -174,6 +174,14 @@ const Footer = () => {
           </div>
           <div style={styles.bottomRight}>
             <span style={styles.copyright}>© {new Date().getFullYear()} Teens Aloud Foundation Kenya. All rights reserved.</span>
+            <a
+              href="https://carlson-kingoina.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.creditLink}
+            >
+              Developer
+            </a>
           </div>
         </div>
       </div>
@@ -320,10 +328,24 @@ const styles: Record<string, React.CSSProperties> = {
   bottomRight: {
     display: 'flex',
     alignItems: 'center',
+    gap: '0.75rem',
+    flexWrap: 'wrap' as const,
   },
   copyright: {
     fontSize: '0.8rem',
     color: '#8abfa8',
+  },
+  creditLink: {
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: '#d8f3e8',
+    textDecoration: 'none',
+    border: '1px solid #4a9a7a',
+    borderRadius: 999,
+    padding: '0.3rem 0.6rem',
+    background: 'rgba(74, 154, 122, 0.15)',
   },
 };
 
