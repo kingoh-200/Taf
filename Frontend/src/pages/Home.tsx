@@ -429,6 +429,14 @@ const Home = () => {
             <Link to="/events" style={s.footerLink}>Events</Link>
             <Link to="/ministries" style={s.footerLink}>Ministries</Link>
             <Link to="/gallery" style={s.footerLink}>Gallery</Link>
+            <a
+              href="https://carlson-kingoina.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={s.developerLink}
+            >
+              Developer
+            </a>
           </div>
         </div>
       </footer>
@@ -1003,6 +1011,17 @@ const s: Record<string, React.CSSProperties> = {
     color: 'var(--primary)',
     textDecoration: 'none',
     fontWeight: 500,
+  },
+  developerLink: {
+    fontSize: '0.72rem',
+    color: 'var(--primary)',
+    textDecoration: 'none',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    border: '1px solid var(--primary)',
+    borderRadius: 999,
+    padding: '0.25rem 0.6rem',
   },
 };
 
