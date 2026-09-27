@@ -6,7 +6,7 @@ import { invalidateCache } from '../api/client';
 interface UseRealtimeOptions {
   /** Polling interval in ms (default: 30000 = 30s) */
   interval?: number;
-  /** Only poll when tab is visible (default: true) */
+  /** Only poll when the tab is visible (default: true) */
   onlyVisible?: boolean;
   /** Enable/disable polling (default: true) */
   enabled?: boolean;
@@ -17,10 +17,19 @@ interface UseRealtimeOptions {
   autoApply?: boolean;
 }
 
+/** Ignore foreground catch-ups that fire within this window of the last poll. */
+const CATCHUP_DEBOUNCE = 5000;
+
 /**
  * Real-time polling hook — loads from cache instantly, then polls in background.
- * By default it shows a "new items" banner when data changes (WhatsApp style);
- * pass `autoApply: true` to have changes appear immediately instead.
+ *
+ * - Instant first paint from the session cache, fresh data fetched silently.
+ * - Keeps polling even if the very first load failed (backend asleep, offline).
+ * - Catches up immediately when the tab/app returns to the foreground instead
+ *   of waiting for the next interval.
+ * - Never stacks overlapping requests.
+ * - By default it shows a "new items" banner when data changes (WhatsApp style);
+ *   pass `autoApply: true` to have changes appear immediately instead.
  *
  * Usage:
  * const { data, loading, newCount, acceptNew, refresh } = useRealtimePolling('/gallery', []);
@@ -38,6 +47,8 @@ export function useRealtimePolling<T = any[]>(
   const [ready, setReady] = useState(false);
   const dataRef = useRef<T>(initialData);
   const mountedRef = useRef(true);
+  const inFlightRef = useRef(false);
+  const lastPollRef = useRef(0);
 
   const applyData = useCallback((next: T) => {
     setData(next);
@@ -51,6 +62,32 @@ export function useRealtimePolling<T = any[]>(
     if (pendingData) applyData(pendingData);
   }, [pendingData, applyData]);
 
+  /** Fetch once and merge the result according to the autoApply setting. */
+  const fetchOnce = useCallback(async (): Promise<'updated' | 'unchanged' | 'skipped'> => {
+    if (inFlightRef.current) return 'skipped';
+    inFlightRef.current = true;
+    lastPollRef.current = Date.now();
+    try {
+      const res = await api.get(endpoint);
+      if (!mountedRef.current) return 'skipped';
+      const next = res.data as T;
+      if (JSON.stringify(dataRef.current) === JSON.stringify(next)) return 'unchanged';
+
+      if (autoApply) {
+        setData(next);
+        dataRef.current = next;
+      } else {
+        setPendingData(next);
+        setNewCount((prev) => prev + countNewItems(dataRef.current, next));
+      }
+      return 'updated';
+    } catch {
+      return 'skipped';
+    } finally {
+      inFlightRef.current = false;
+    }
+  }, [endpoint, autoApply]);
+
   /**
    * Force an immediate fresh fetch and apply it — used right after the user
    * creates/likes/saves something so their own change shows instantly.
@@ -62,10 +99,13 @@ export function useRealtimePolling<T = any[]>(
       if (!mountedRef.current) return;
       applyData(res.data as T);
       setReady(true);
-    } catch {}
+    } catch {
+      // Even if this fails, make sure polling is running so we recover later.
+      if (mountedRef.current) setReady(true);
+    }
   }, [endpoint, applyData]);
 
-  // Initial fetch — uses cache for instant display
+  // Initial fetch — uses cache for instant display, then refreshes in background
   useEffect(() => {
     mountedRef.current = true;
 
@@ -77,60 +117,54 @@ export function useRealtimePolling<T = any[]>(
         setData(cachedData);
         dataRef.current = cachedData;
         setLoading(false);
-        setReady(true);
 
-        // If from cache, fetch fresh in background
-        if (fromCache) {
-          try {
-            const res = await api.get(endpoint);
-            const freshData = res.data as T;
-            if (!mountedRef.current) return;
-            if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
-              if (autoApply) {
-                setData(freshData);
-                dataRef.current = freshData;
-              } else {
-                setPendingData(freshData);
-                setNewCount(countNewItems(cachedData, freshData));
-              }
-            }
-          } catch {}
-        }
+        if (fromCache) await fetchOnce();
       } catch {
-        if (mountedRef.current) setLoading(false);
+        // Nothing cached and the request failed (backend asleep, offline) —
+        // keep the defaults and let background polling recover.
+      } finally {
+        // Always start polling, even when the first load failed.
+        if (mountedRef.current) {
+          setLoading(false);
+          setReady(true);
+        }
       }
     };
 
     loadInitial();
 
     return () => { mountedRef.current = false; };
-  }, [endpoint, autoApply]);
+  }, [endpoint, fetchOnce]);
 
-  // Background polling — starts once the first load has finished
+  // Background polling
   useEffect(() => {
     if (!enabled || !ready) return;
 
-    const poll = async () => {
+    const tick = () => {
       if (onlyVisible && document.hidden) return;
-      try {
-        const res = await api.get(endpoint);
-        const newData = res.data as T;
-        if (!mountedRef.current) return;
-        if (JSON.stringify(dataRef.current) === JSON.stringify(newData)) return;
-
-        if (autoApply) {
-          setData(newData);
-          dataRef.current = newData;
-        } else {
-          setPendingData(newData);
-          setNewCount((prev) => prev + countNewItems(dataRef.current, newData));
-        }
-      } catch {}
+      fetchOnce();
     };
 
-    const id = setInterval(poll, interval);
-    return () => clearInterval(id);
-  }, [endpoint, interval, onlyVisible, enabled, autoApply, ready]);
+    const id = setInterval(tick, interval);
+
+    // Catch up as soon as the tab/app is back in the foreground.
+    const onForeground = () => {
+      if (document.hidden) return;
+      if (Date.now() - lastPollRef.current < CATCHUP_DEBOUNCE) return;
+      fetchOnce();
+    };
+
+    document.addEventListener('visibilitychange', onForeground);
+    window.addEventListener('focus', onForeground);
+    window.addEventListener('online', onForeground);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onForeground);
+      window.removeEventListener('focus', onForeground);
+      window.removeEventListener('online', onForeground);
+    };
+  }, [endpoint, interval, onlyVisible, enabled, fetchOnce, ready]);
 
   return { data, loading, newCount, acceptNew, refresh, pendingData };
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { cachedGet } from '../api/client';
 import type { Event, Announcement } from '../api/types';
 import { usePageContent, useMinistries } from '../hooks/usePageContent';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useRealtimePolling } from '../hooks/useRealtimePolling';
 
 interface GalleryItem {
   id: number;
@@ -17,17 +17,27 @@ interface GalleryItem {
 import HeroCarousel from '../components/HeroCarousel';
 import NewsletterForm from '../components/NewsletterForm';
 
+/** Endpoints may return a bare array or wrap it in { data: [...] }. */
+function asList<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  const nested = (value as any)?.data;
+  return Array.isArray(nested) ? (nested as T[]) : [];
+}
+
 const Home = () => {
   useDocumentTitle('Home');
-  const [events, setEvents] = useState<Event[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [memberCount, setMemberCount] = useState(0);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [user, setUser] = useState<any>(null);
-  const [eventsLoading, setEventsLoading] = useState(true);
-  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
-  const [membersLoading, setMembersLoading] = useState(true);
-  const [galleryLoading, setGalleryLoading] = useState(true);
+
+  // Live data — cached for instant paint, then kept fresh by background polling
+  const { data: eventsData, loading: eventsLoading } = useRealtimePolling<Event[]>('/events', [], { interval: 30000, autoApply: true });
+  const { data: announcementsData, loading: announcementsLoading } = useRealtimePolling<Announcement[]>('/announcements', [], { interval: 30000, autoApply: true });
+  const { data: membersData, loading: membersLoading } = useRealtimePolling<any[]>('/members', [], { interval: 60000, autoApply: true });
+  const { data: galleryData, loading: galleryLoading } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 30000, autoApply: true });
+
+  const events = asList<Event>(eventsData).slice(0, 3);
+  const announcements = asList<Announcement>(announcementsData).slice(0, 3);
+  const memberCount = asList<any>(membersData).length;
+  const galleryItems = asList<GalleryItem>(galleryData).slice(0, 6);
   
   // Fetch editable content from database
   const { getTitle, getBody } = usePageContent('home');
@@ -36,38 +46,6 @@ const Home = () => {
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
-
-    cachedGet('/events')
-      .then((res) => {
-        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
-        setEvents(items.slice(0, 3));
-      })
-      .catch(() => {})
-      .finally(() => setEventsLoading(false));
-
-    cachedGet('/announcements')
-      .then((res) => {
-        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
-        setAnnouncements(items.slice(0, 3));
-      })
-      .catch(() => {})
-      .finally(() => setAnnouncementsLoading(false));
-
-    cachedGet('/members')
-      .then((res) => {
-        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
-        setMemberCount(items.length);
-      })
-      .catch(() => {})
-      .finally(() => setMembersLoading(false));
-
-    cachedGet('/gallery')
-      .then((res) => {
-        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
-        setGalleryItems(items.slice(0, 6));
-      })
-      .catch(() => {})
-      .finally(() => setGalleryLoading(false));
   }, []);
 
   const initials = user
