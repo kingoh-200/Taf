@@ -4,6 +4,7 @@ import { uploadToCloudinary, isCloudinaryConfigured, isVideoFile } from '../util
 import { processImage } from '../utils/imageProcessor';
 import { GalleryItemSkeleton } from '../components/Skeleton';
 import NewItemsBanner from '../components/NewItemsBanner';
+import UploadProgress, { UploadStage } from '../components/UploadProgress';
 import { useRealtimePolling } from '../hooks/useRealtimePolling';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -104,7 +105,7 @@ const Gallery = () => {
   const [uploadCategory, setUploadCategory] = useState('general');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<{ url: string; isVideo: boolean }[]>([]);
-  const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number; percent: number; stage: UploadStage } | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
   const [savedItems, setSavedItems] = useState<GalleryItem[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -199,7 +200,7 @@ const Gallery = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const video = isVideoFile(file);
-        setProgress({ done: i, total: files.length, percent: 0 });
+        setProgress({ done: i, total: files.length, percent: 0, stage: 'preparing' });
         try {
           let url: string;
           if (video) {
@@ -207,15 +208,16 @@ const Gallery = () => {
               throw new Error('Video uploads require Cloudinary. Please configure it in your .env file.');
             }
             url = await uploadToCloudinary(file, 'gallery', {
-              onProgress: (percent) => setProgress({ done: i, total: files.length, percent }),
+              onProgress: (percent) => setProgress({ done: i, total: files.length, percent, stage: 'uploading' }),
             });
           } else if (isCloudinaryConfigured) {
             url = await uploadToCloudinary(file, 'gallery', {
-              onProgress: (percent) => setProgress({ done: i, total: files.length, percent }),
+              onProgress: (percent) => setProgress({ done: i, total: files.length, percent, stage: 'uploading' }),
             });
           } else {
             url = await processImage(file, 1200, 0.85);
           }
+          setProgress({ done: i, total: files.length, percent: 100, stage: 'saving' });
           const res = await api.post('/gallery', {
             url,
             type: video ? 'video' : 'image',
@@ -474,15 +476,12 @@ const Gallery = () => {
               </select>
             </div>
             {uploading && progress && (
-              <div style={{ marginTop: '0.8rem' }}>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.3rem' }}>
-                  Uploading {Math.min(progress.done + 1, progress.total)} of {progress.total}
-                  {progress.percent > 0 ? ` — ${progress.percent}%` : ''}
-                </div>
-                <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progress.percent}%`, background: 'var(--primary)', transition: 'width 0.2s' }} />
-                </div>
-              </div>
+              <UploadProgress
+                stage={progress.stage}
+                percent={progress.percent}
+                current={progress.done + 1}
+                total={progress.total}
+              />
             )}
             <button onClick={handleUpload} disabled={!files.length || uploading} style={{ ...s.uploadBtn, opacity: !files.length || uploading ? 0.6 : 1 }}>
               {uploading

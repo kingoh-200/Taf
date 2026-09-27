@@ -4,6 +4,7 @@ import api from '../api/client';
 import type { Event, Announcement, Member } from '../api/types';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import UploadProgress, { UploadStage } from '../components/UploadProgress';
 
 type Tab = 'overview' | 'events' | 'announcements' | 'members' | 'gallery' | 'users' | 'subscribers' | 'email' | 'messages' | 'content';
 
@@ -119,26 +120,35 @@ const EventsManager = () => {
   const [editForm, setEditForm] = useState({ title: '', description: '', event_date: '', location: '', image_url: '' });
   const [uploading, setUploading] = useState(false);
   const [editUploading, setEditUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [editUploadProgress, setEditUploadProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState<{ percent: number; stage: UploadStage }>({ percent: 0, stage: 'preparing' });
+  const [editUploadProgress, setEditUploadProgress] = useState<{ percent: number; stage: UploadStage }>({ percent: 0, stage: 'preparing' });
 
   const load = () => api.get('/events').then((res) => setEvents(res.data));
   useEffect(() => { load(); }, []);
 
+  const setPosterProgress = (isEdit: boolean, next: { percent: number; stage: UploadStage }) => {
+    if (isEdit) setEditUploadProgress(next); else setUploadProgress(next);
+  };
+
   const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    if (isEdit) { setEditUploading(true); setEditUploadProgress(0); } else { setUploading(true); setUploadProgress(0); }
+    if (isEdit) setEditUploading(true); else setUploading(true);
+    setPosterProgress(isEdit, { percent: 0, stage: 'preparing' });
     try {
       const url = await uploadToCloudinary(file, 'events', {
         maxDimension: 1600,
-        onProgress: (p) => isEdit ? setEditUploadProgress(p) : setUploadProgress(p),
+        onProgress: (p) => setPosterProgress(isEdit, { percent: p, stage: 'uploading' }),
       });
       if (isEdit) {
         setEditForm((prev) => ({ ...prev, image_url: url }));
       } else {
         setForm((prev) => ({ ...prev, image_url: url }));
       }
+      // Let the finished state show before the preview replaces it
+      setPosterProgress(isEdit, { percent: 100, stage: 'done' });
+      await new Promise((r) => setTimeout(r, 800));
     } catch (err: any) {
       alert(err.message || 'Upload failed');
     }
@@ -196,7 +206,7 @@ const EventsManager = () => {
             </span>
           )}
         </label>
-        {currentUrl ? (
+        {currentUrl && (
           <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
             <img src={currentUrl} alt="Event poster" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
             <button
@@ -205,21 +215,15 @@ const EventsManager = () => {
               style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 6, padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem' }}
             ><i className="fa-solid fa-times"></i> Remove</button>
           </div>
-        ) : (
-          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem', border: '2px dashed var(--border)', borderRadius: 8, cursor: 'pointer', background: 'var(--bg-alt)', color: 'var(--text-light)', fontSize: '0.85rem', transition: 'all 0.2s' }}>
-            {uploadingNow ? (
-              <>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}></i>
-                <span style={{ marginBottom: '0.4rem' }}>{progress > 0 ? `Uploading... ${progress}%` : 'Compressing & uploading...'}</span>
-                <div style={{ width: '100%', maxWidth: 240, height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.max(progress, 4)}%`, background: 'var(--primary)', borderRadius: 3, transition: 'width 0.2s' }}></div>
-                </div>
-              </>
-            ) : (
-              <><i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', marginBottom: '0.4rem', color: 'var(--primary)' }}></i>Click to upload poster image</>
-            )}
+        )}
+        {!currentUrl && (
+          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.2rem', border: '2px dashed var(--border)', borderRadius: 8, cursor: uploadingNow ? 'default' : 'pointer', background: 'var(--bg-alt)', color: 'var(--text-light)', fontSize: '0.85rem', transition: 'all 0.2s', opacity: uploadingNow ? 0.6 : 1 }}>
+            <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', marginBottom: '0.4rem', color: 'var(--primary)' }}></i>Click to upload poster image
             <input type="file" accept="image/*" onChange={(e) => handlePosterUpload(e, isEdit)} style={{ display: 'none' }} disabled={uploadingNow} />
           </label>
+        )}
+        {uploadingNow && (
+          <UploadProgress stage={progress.stage} percent={progress.percent} title="Event poster" />
         )}
       </div>
     );

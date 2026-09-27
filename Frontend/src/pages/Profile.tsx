@@ -4,6 +4,7 @@ import api from '../api/client';
 import type { User } from '../api/types';
 import { processImage } from '../utils/imageProcessor';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinary';
+import UploadProgress, { UploadStage } from '../components/UploadProgress';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const ProfileProjects = ({ userId }: { userId: number }) => {
@@ -155,7 +156,8 @@ const Profile = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUpload, setImageUpload] = useState<{ percent: number; stage: UploadStage } | null>(null);
+  const imageUploading = imageUpload !== null;
   const [savedItems, setSavedItems] = useState<any[]>([]);
 
   const populateForm = useCallback((userData: User) => {
@@ -197,6 +199,31 @@ const Profile = () => {
     if (!user) return;
     api.get('/gallery/saved').then((res) => setSavedItems(res.data)).catch(() => {});
   }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError('');
+    setImageUpload({ percent: 0, stage: 'preparing' });
+    try {
+      let imageUrl: string;
+      if (isCloudinaryConfigured) {
+        imageUrl = await uploadToCloudinary(file, 'profiles', {
+          maxDimension: 800,
+          onProgress: (percent) => setImageUpload({ percent, stage: 'uploading' }),
+        });
+      } else {
+        imageUrl = await processImage(file, 400, 0.8);
+      }
+      setForm((prev) => ({ ...prev, profile_image: imageUrl }));
+      setImageUpload({ percent: 100, stage: 'done' });
+      setTimeout(() => setImageUpload(null), 800);
+    } catch {
+      setImageUpload(null);
+      setError('Failed to upload image. Try a different file.');
+    }
+  };
 
   const handleSave = async () => {
     setError('');
@@ -277,6 +304,9 @@ const Profile = () => {
 
   const userSkills = (user as any).skills ? (user as any).skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
 
+  // Show the freshly uploaded photo straight away, before saving
+  const avatarSrc = editing ? (form.profile_image || user.profile_image) : user.profile_image;
+
   return (
     <div className="page" style={{ maxWidth: 600, margin: '0 auto' }}>
       {error && <div className="alert alert-error"><i className="fa-solid fa-circle-exclamation" style={{ marginRight: '0.4rem' }}></i>{error}</div>}
@@ -285,8 +315,8 @@ const Profile = () => {
       <div className="card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
         {/* Avatar */}
         <div style={styles.avatarContainer}>
-          {user.profile_image ? (
-            <img src={user.profile_image} alt="Profile" style={styles.avatarImage} />
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="Profile" style={styles.avatarImage} />
           ) : (
             <div style={styles.avatar}>
               <span style={styles.initials}>{initials}</span>
@@ -299,29 +329,18 @@ const Profile = () => {
                 type="file"
                 accept="image/*"
                 style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setImageUploading(true);
-                    try {
-                      let imageUrl: string;
-                      if (isCloudinaryConfigured) {
-                        imageUrl = await uploadToCloudinary(file, 'profiles', { maxDimension: 800 });
-                      } else {
-                        imageUrl = await processImage(file, 400, 0.8);
-                      }
-                      setForm({ ...form, profile_image: imageUrl });
-                    } catch {
-                      setError('Failed to upload image. Try a different file.');
-                    } finally {
-                      setImageUploading(false);
-                    }
-                  }
-                }}
+                disabled={imageUploading}
+                onChange={handleAvatarUpload}
               />
             </label>
           )}
         </div>
+
+        {editing && imageUpload && (
+          <div style={{ maxWidth: 380, margin: '0 auto', textAlign: 'left' }}>
+            <UploadProgress stage={imageUpload.stage} percent={imageUpload.percent} title="Profile photo" />
+          </div>
+        )}
 
         {!editing ? (
           <>
