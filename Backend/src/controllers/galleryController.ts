@@ -219,7 +219,12 @@ export const getSavedItems = async (req: AuthRequest, res: Response) => {
       .where('gallery_saves.user_id', userId)
       .orderBy('gallery_saves.created_at', 'desc');
 
-    res.json(items);
+    // These are all saved by definition, and we still need the user's like state
+    const likedIds = await db('gallery_likes').where({ user_id: userId }).pluck('item_id');
+
+    res.json(
+      items.map((item) => ({ ...item, saved: true, liked: likedIds.includes(item.id) })),
+    );
   } catch (error) {
     console.error('Get saved items error:', error);
     res.status(500).json({ error: 'Failed to fetch saved items.' });

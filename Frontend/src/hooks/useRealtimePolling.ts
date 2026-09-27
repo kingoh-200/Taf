@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { cachedGet } from '../api/client';
 import api from '../api/client';
+import { invalidateCache } from '../api/client';
 
 interface UseRealtimeOptions {
   /** Polling interval in ms (default: 30000 = 30s) */
@@ -9,38 +10,60 @@ interface UseRealtimeOptions {
   onlyVisible?: boolean;
   /** Enable/disable polling (default: true) */
   enabled?: boolean;
+  /**
+   * Apply changes straight away instead of showing the "new items" banner.
+   * Use for feeds where new content should just appear (default: false).
+   */
+  autoApply?: boolean;
 }
 
 /**
  * Real-time polling hook — loads from cache instantly, then polls in background.
- * Only shows "new items" banner when data actually changes (like WhatsApp).
+ * By default it shows a "new items" banner when data changes (WhatsApp style);
+ * pass `autoApply: true` to have changes appear immediately instead.
  *
  * Usage:
- * const { data, loading, newCount, acceptNew } = useRealtimePolling('/gallery', []);
+ * const { data, loading, newCount, acceptNew, refresh } = useRealtimePolling('/gallery', []);
  */
 export function useRealtimePolling<T = any[]>(
   endpoint: string,
   initialData: T,
   options: UseRealtimeOptions = {},
 ) {
-  const { interval = 30000, onlyVisible = true, enabled = true } = options;
+  const { interval = 30000, onlyVisible = true, enabled = true, autoApply = false } = options;
   const [data, setData] = useState<T>(initialData);
   const [loading, setLoading] = useState(true);
   const [newCount, setNewCount] = useState(0);
   const [pendingData, setPendingData] = useState<T | null>(null);
+  const [ready, setReady] = useState(false);
   const dataRef = useRef<T>(initialData);
   const mountedRef = useRef(true);
-  const initialLoadDone = useRef(false);
+
+  const applyData = useCallback((next: T) => {
+    setData(next);
+    dataRef.current = next;
+    setPendingData(null);
+    setNewCount(0);
+  }, []);
 
   // Accept pending data (user clicks "new items" banner)
   const acceptNew = useCallback(() => {
-    if (pendingData) {
-      setData(pendingData);
-      dataRef.current = pendingData;
-      setPendingData(null);
-      setNewCount(0);
-    }
-  }, [pendingData]);
+    if (pendingData) applyData(pendingData);
+  }, [pendingData, applyData]);
+
+  /**
+   * Force an immediate fresh fetch and apply it — used right after the user
+   * creates/likes/saves something so their own change shows instantly.
+   */
+  const refresh = useCallback(async () => {
+    invalidateCache(endpoint);
+    try {
+      const res = await api.get(endpoint);
+      if (!mountedRef.current) return;
+      applyData(res.data as T);
+      setReady(true);
+    } catch {}
+  }, [endpoint, applyData]);
 
   // Initial fetch — uses cache for instant display
   useEffect(() => {
@@ -54,23 +77,21 @@ export function useRealtimePolling<T = any[]>(
         setData(cachedData);
         dataRef.current = cachedData;
         setLoading(false);
-        initialLoadDone.current = true;
+        setReady(true);
 
-        // If from cache, fetch fresh in background silently
+        // If from cache, fetch fresh in background
         if (fromCache) {
           try {
-        const res = await api.get(endpoint);
-        const freshData = res.data as T;
+            const res = await api.get(endpoint);
+            const freshData = res.data as T;
             if (!mountedRef.current) return;
-            const cachedStr = JSON.stringify(cachedData);
-            const freshStr = JSON.stringify(freshData);
-            if (cachedStr !== freshStr) {
-              // Data changed — show as pending update
-              setPendingData(freshData);
-              if (Array.isArray(freshData) && Array.isArray(cachedData)) {
-                const oldIds = new Set((cachedData as any[]).map((i: any) => i.id));
-                const newItems = (freshData as any[]).filter((i: any) => !oldIds.has(i.id));
-                setNewCount(newItems.length);
+            if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
+              if (autoApply) {
+                setData(freshData);
+                dataRef.current = freshData;
+              } else {
+                setPendingData(freshData);
+                setNewCount(countNewItems(cachedData, freshData));
               }
             }
           } catch {}
@@ -83,11 +104,11 @@ export function useRealtimePolling<T = any[]>(
     loadInitial();
 
     return () => { mountedRef.current = false; };
-  }, [endpoint]);
+  }, [endpoint, autoApply]);
 
-  // Background polling — only runs after initial load
+  // Background polling — starts once the first load has finished
   useEffect(() => {
-    if (!enabled || !initialLoadDone.current) return;
+    if (!enabled || !ready) return;
 
     const poll = async () => {
       if (onlyVisible && document.hidden) return;
@@ -95,25 +116,30 @@ export function useRealtimePolling<T = any[]>(
         const res = await api.get(endpoint);
         const newData = res.data as T;
         if (!mountedRef.current) return;
+        if (JSON.stringify(dataRef.current) === JSON.stringify(newData)) return;
 
-        const currentStr = JSON.stringify(dataRef.current);
-        const newStr = JSON.stringify(newData);
-        if (currentStr !== newStr) {
+        if (autoApply) {
+          setData(newData);
+          dataRef.current = newData;
+        } else {
           setPendingData(newData);
-          if (Array.isArray(newData) && Array.isArray(dataRef.current)) {
-            const oldIds = new Set((dataRef.current as any[]).map((i: any) => i.id));
-            const newItems = (newData as any[]).filter((i: any) => !oldIds.has(i.id));
-            setNewCount((prev) => prev + newItems.length);
-          } else {
-            setNewCount((prev) => prev + 1);
-          }
+          setNewCount((prev) => prev + countNewItems(dataRef.current, newData));
         }
       } catch {}
     };
 
     const id = setInterval(poll, interval);
     return () => clearInterval(id);
-  }, [endpoint, interval, onlyVisible, enabled]);
+  }, [endpoint, interval, onlyVisible, enabled, autoApply, ready]);
 
-  return { data, loading, newCount, acceptNew, pendingData };
+  return { data, loading, newCount, acceptNew, refresh, pendingData };
+}
+
+/** How many items are in `next` that weren't in `prev`. */
+function countNewItems(prev: any, next: any): number {
+  if (Array.isArray(prev) && Array.isArray(next)) {
+    const oldIds = new Set(prev.map((i: any) => i?.id));
+    return next.filter((i: any) => !oldIds.has(i?.id)).length;
+  }
+  return 1;
 }

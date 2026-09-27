@@ -87,6 +87,20 @@ export function clearCache() {
 }
 
 /**
+ * Drop cached GET responses so the next request is guaranteed fresh.
+ * Pass a URL prefix (e.g. '/gallery') to only invalidate matching entries.
+ */
+export function invalidateCache(urlPrefix?: string) {
+  if (!urlPrefix) {
+    cache.clear();
+    return;
+  }
+  for (const key of Array.from(cache.keys())) {
+    if (key.startsWith(urlPrefix)) cache.delete(key);
+  }
+}
+
+/**
  * Retry wrapper for API calls — helpful when Render is waking up from sleep.
  * Usage: const data = await retry(() => api.get('/events'), 3);
  */

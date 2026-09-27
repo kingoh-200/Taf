@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../api/client';
+import api, { invalidateCache } from '../api/client';
 import { uploadToCloudinary, isCloudinaryConfigured, isVideoFile } from '../utils/cloudinary';
 import { processImage } from '../utils/imageProcessor';
 import { GalleryItemSkeleton } from '../components/Skeleton';
@@ -36,6 +36,37 @@ interface Comment {
   author_image: string | null;
 }
 
+/**
+ * The current user's like/save state is remembered in localStorage so the
+ * buttons stay red/orange even before (or if) the server confirms — and it
+ * survives a refresh, a flaky connection or a stale service-worker cache.
+ */
+type OverlayEntry = Partial<GalleryItem> & { t?: number };
+
+const OVERLAY_KEY = (userId?: number) => `gallery_state:${userId ?? 'anon'}`;
+// Remembered state older than this is dropped and the server wins again.
+const OVERLAY_TTL = 24 * 60 * 60 * 1000;
+
+function loadOverlay(userId?: number): Map<number, OverlayEntry> {
+  try {
+    const raw = localStorage.getItem(OVERLAY_KEY(userId));
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw) as Record<string, OverlayEntry>;
+    const fresh = Object.entries(parsed).filter(
+      ([, v]) => v?.t && Date.now() - v.t < OVERLAY_TTL,
+    );
+    return new Map(fresh.map(([k, v]) => [Number(k), v]));
+  } catch {
+    return new Map();
+  }
+}
+
+function persistOverlay(userId: number | undefined, map: Map<number, OverlayEntry>) {
+  try {
+    localStorage.setItem(OVERLAY_KEY(userId), JSON.stringify(Object.fromEntries(map)));
+  } catch {}
+}
+
 const CATEGORIES = [
   { key: 'all', label: 'All', icon: 'fa-solid fa-images' },
   { key: 'events', label: 'Events', icon: 'fa-solid fa-calendar-days' },
@@ -48,19 +79,32 @@ const CATEGORIES = [
 
 const Gallery = () => {
   useDocumentTitle('Gallery');
-  const { data: polledItems, loading, newCount, acceptNew } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 30000 });
-  const [optimisticItems, setOptimisticItems] = useState<Map<number, Partial<GalleryItem>>>(new Map());
-  const items = polledItems.map((item) => {
-    const optimistic = optimisticItems.get(item.id);
-    return optimistic ? { ...item, ...optimistic } : item;
-  });
+  const { data: polledItems, loading, newCount, acceptNew, refresh } = useRealtimePolling<GalleryItem[]>('/gallery', [], { interval: 15000, autoApply: true });
+  // Local overlay (persisted) — keeps likes/saves alive across refreshes
+  const [optimisticItems, setOptimisticItems] = useState<Map<number, OverlayEntry>>(() => loadOverlay());
+  // Items uploaded by this user that the feed hasn't caught up with yet
+  const [pendingItems, setPendingItems] = useState<GalleryItem[]>([]);
+  // Items deleted in this session (hidden immediately, dropped for good)
+  const [deletedIds, setDeletedIds] = useState<number[]>([]);
+
+  const items: GalleryItem[] = [
+    ...pendingItems.filter((p) => !polledItems.some((i) => i.id === p.id)),
+    ...polledItems,
+  ]
+    .filter((item) => !deletedIds.includes(item.id))
+    .map((item) => {
+      const optimistic = optimisticItems.get(item.id);
+      return optimistic ? { ...item, ...optimistic } : item;
+    });
+
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [uploadCategory, setUploadCategory] = useState('general');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<{ url: string; isVideo: boolean }[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
   const [savedItems, setSavedItems] = useState<GalleryItem[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -72,30 +116,44 @@ const Gallery = () => {
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
+    const parsed = stored ? JSON.parse(stored) : null;
+    setUser(parsed);
+    setOptimisticItems(loadOverlay(parsed?.id));
   }, []);
 
+  // Once the server agrees with our remembered state, drop the overlay entry.
   useEffect(() => {
     setOptimisticItems((prev) => {
       const next = new Map(prev);
+      let changed = false;
       for (const item of polledItems) {
-        const optimistic = next.get(item.id);
-        if (optimistic) {
-          if (optimistic.like_count !== undefined && item.like_count >= optimistic.like_count) {
-            next.delete(item.id);
-          } else if (optimistic.saved !== undefined && item.saved === optimistic.saved) {
-            next.delete(item.id);
-          }
+        const ov = next.get(item.id);
+        if (!ov) continue;
+        const matches =
+          (ov.liked === undefined || ov.liked === item.liked) &&
+          (ov.saved === undefined || ov.saved === item.saved) &&
+          (ov.like_count === undefined || ov.like_count === item.like_count) &&
+          (ov.save_count === undefined || ov.save_count === item.save_count);
+        if (matches) {
+          next.delete(item.id);
+          changed = true;
         }
       }
-      return next;
+      return changed ? next : prev;
     });
   }, [polledItems]);
 
+  // Remember likes/saves on this device so they survive a refresh.
+  useEffect(() => {
+    if (!user) return;
+    persistOverlay(user.id, optimisticItems);
+  }, [optimisticItems, user]);
+
   const loadSaved = () => {
     if (!user) return;
+    invalidateCache('/gallery/saved');
     api.get('/gallery/saved')
-      .then((res) => setSavedItems(res.data))
+      .then((res) => setSavedItems(res.data.map((i: GalleryItem) => ({ ...i, saved: true }))))
       .catch(() => {});
   };
 
@@ -107,101 +165,141 @@ const Gallery = () => {
     if (user) loadSaved();
   };
 
+  const clearPreviews = useCallback((list: { url: string }[]) => {
+    list.forEach((p) => URL.revokeObjectURL(p.url));
+  }, []);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const picked = Array.from(e.target.files || []);
+    e.target.value = ''; // allow picking the same files again later
+    if (!picked.length) return;
+    setPreviews((prev) => {
+      clearPreviews(prev);
+      return picked.map((f) => ({ url: URL.createObjectURL(f), isVideo: isVideoFile(f) }));
+    });
+    setFiles(picked);
   };
 
+  const resetUploadForm = () => {
+    setPreviews((prev) => { clearPreviews(prev); return []; });
+    setFiles([]);
+    setCaption('');
+    setUploadCategory('general');
+    setProgress(null);
+  };
+
+  // Upload every selected file, one after another, and show each item instantly.
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!files.length) return;
     setUploading(true);
     setError('');
+    const uploaded: GalleryItem[] = [];
+    let failed = 0;
     try {
-      let url: string;
-      const video = isVideoFile(selectedFile);
-      if (video) {
-        if (!isCloudinaryConfigured) {
-          setError('Video uploads require Cloudinary. Please configure it in your .env file.');
-          setUploading(false);
-          return;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const video = isVideoFile(file);
+        setProgress({ done: i, total: files.length, percent: 0 });
+        try {
+          let url: string;
+          if (video) {
+            if (!isCloudinaryConfigured) {
+              throw new Error('Video uploads require Cloudinary. Please configure it in your .env file.');
+            }
+            url = await uploadToCloudinary(file, 'gallery', {
+              onProgress: (percent) => setProgress({ done: i, total: files.length, percent }),
+            });
+          } else if (isCloudinaryConfigured) {
+            url = await uploadToCloudinary(file, 'gallery', {
+              onProgress: (percent) => setProgress({ done: i, total: files.length, percent }),
+            });
+          } else {
+            url = await processImage(file, 1200, 0.85);
+          }
+          const res = await api.post('/gallery', {
+            url,
+            type: video ? 'video' : 'image',
+            caption: caption || null,
+            category: uploadCategory,
+          });
+          uploaded.push(res.data);
+        } catch (err: any) {
+          failed += 1;
+          console.error('Upload failed for', file.name, err);
         }
-        url = await uploadToCloudinary(selectedFile, 'gallery');
-      } else if (isCloudinaryConfigured) {
-        url = await uploadToCloudinary(selectedFile, 'gallery');
-      } else {
-        url = await processImage(selectedFile, 1200, 0.85);
       }
-      const isVideo = video;
-      const res = await api.post('/gallery', {
-        url,
-        type: isVideo ? 'video' : 'image',
-        caption: caption || null,
-        category: uploadCategory,
-      });
-      setOptimisticItems((prev) => {
-        const next = new Map(prev);
-        next.set(res.data.id, res.data);
-        return next;
-      });
-      setSelectedFile(null);
-      setPreview('');
-      setCaption('');
-      setUploadCategory('general');
+
+      if (uploaded.length) {
+        // Show them immediately — no refresh, no waiting for the next poll.
+        setPendingItems((prev) => [...uploaded.slice().reverse(), ...prev]);
+        invalidateCache('/gallery');
+        refresh();
+      }
+
+      resetUploadForm();
+
+      if (failed > 0) {
+        setError(
+          uploaded.length
+            ? `${failed} of ${files.length} files failed to upload. The rest were added.`
+            : 'Failed to upload. Try a smaller file.',
+        );
+        return;
+      }
+
       setShowUpload(false);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to upload. Try a smaller file.');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleLike = async (item: GalleryItem) => {
-    if (!user) return;
+  /** Update the remembered state for one item (kept in localStorage). */
+  const setOverlay = (id: number, patch: Partial<GalleryItem>) => {
     setOptimisticItems((prev) => {
       const next = new Map(prev);
-      next.set(item.id, {
-        liked: !item.liked,
-        like_count: item.liked ? item.like_count - 1 : item.like_count + 1,
-      });
+      next.set(id, { ...next.get(id), ...patch, t: Date.now() });
       return next;
+    });
+  };
+
+  const handleLike = async (item: GalleryItem) => {
+    if (!user) return;
+    // Respond instantly, then remember it locally so a refresh keeps it red.
+    setOverlay(item.id, {
+      liked: !item.liked,
+      like_count: item.liked ? item.like_count - 1 : item.like_count + 1,
     });
     try {
       const res = await api.post(`/gallery/${item.id}/like`);
-      setOptimisticItems((prev) => {
-        const next = new Map(prev);
-        next.set(item.id, { liked: res.data.liked, like_count: res.data.like_count });
-        return next;
-      });
+      setOverlay(item.id, { liked: res.data.liked, like_count: res.data.like_count });
       if (viewItem?.id === item.id) {
         setViewItem({ ...viewItem, liked: res.data.liked, like_count: res.data.like_count });
       }
+      invalidateCache('/gallery');
+      refresh();
     } catch {}
   };
 
   const handleSave = async (item: GalleryItem) => {
     if (!user) return;
-    setOptimisticItems((prev) => {
-      const next = new Map(prev);
-      next.set(item.id, {
-        saved: !item.saved,
-        save_count: item.saved ? item.save_count - 1 : item.save_count + 1,
-      });
-      return next;
+    setOverlay(item.id, {
+      saved: !item.saved,
+      save_count: item.saved ? item.save_count - 1 : item.save_count + 1,
     });
     try {
       const res = await api.post(`/gallery/${item.id}/save`);
-      setOptimisticItems((prev) => {
-        const next = new Map(prev);
-        next.set(item.id, { saved: res.data.saved, save_count: res.data.save_count });
-        return next;
+      setOverlay(item.id, { saved: res.data.saved, save_count: res.data.save_count });
+      setSavedItems((prev) => {
+        if (res.data.saved) {
+          return prev.some((i) => i.id === item.id) ? prev : [item, ...prev];
+        }
+        return prev.filter((i) => i.id !== item.id);
       });
       if (viewItem?.id === item.id) {
         setViewItem({ ...viewItem, saved: res.data.saved, save_count: res.data.save_count });
       }
+      invalidateCache('/gallery');
+      refresh();
       refreshSaved();
     } catch {}
   };
@@ -210,13 +308,12 @@ const Gallery = () => {
     if (!confirm('Delete this item?')) return;
     try {
       await api.delete(`/gallery/${item.id}`);
-      setOptimisticItems((prev) => {
-        const next = new Map(prev);
-        next.set(item.id, { ...item, deleted: true } as any);
-        return next;
-      });
+      setDeletedIds((prev) => [...prev, item.id]);
+      setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
       setSavedItems(savedItems.filter((i) => i.id !== item.id));
       setViewItem(null);
+      invalidateCache('/gallery');
+      refresh();
     } catch {}
   };
 
@@ -308,11 +405,10 @@ const Gallery = () => {
           <p style={s.heroSubtitle}>
             Moments, memories and experiences from the Teens Aloud community.
           </p>
-          {user && (
-            <button onClick={() => setShowUpload(!showUpload)} style={s.heroBtn}>
-              <i className={`fa-solid ${showUpload ? 'fa-xmark' : 'fa-cloud-arrow-up'}`} style={{ marginRight: '0.4rem' }}></i>
-              {showUpload ? 'Cancel' : 'Upload Photo'}
-            </button>
+          {user && (                <button onClick={() => { if (showUpload) resetUploadForm(); setShowUpload(!showUpload); }} style={s.heroBtn}>
+                  <i className={`fa-solid ${showUpload ? 'fa-xmark' : 'fa-cloud-arrow-up'}`} style={{ marginRight: '0.4rem' }}></i>
+                  {showUpload ? 'Cancel' : 'Upload Photos'}
+                </button>
           )}
         </div>
       </section>
@@ -328,22 +424,45 @@ const Gallery = () => {
             <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>
               <i className="fa-solid fa-cloud-arrow-up" style={{ marginRight: '0.4rem' }}></i>Upload to Gallery
             </h3>
-            {!preview ? (
+            {previews.length === 0 ? (
               <label style={s.uploadArea}>
-                <i className="fa-solid fa-image" style={{ fontSize: '2.5rem', color: 'var(--text-muted)' }}></i>
-                <p style={{ color: 'var(--text-light)', margin: '0.5rem 0 0' }}>Click to select image or video</p>
-                <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileSelect} />
+                <i className="fa-solid fa-images" style={{ fontSize: '2.5rem', color: 'var(--text-muted)' }}></i>
+                <p style={{ color: 'var(--text-light)', margin: '0.5rem 0 0', fontWeight: 500 }}>Click to select photos or videos</p>
+                <p style={{ color: 'var(--text-muted)', margin: '0.3rem 0 0', fontSize: '0.82rem' }}>
+                  You can pick several at once — hold Ctrl / Cmd to select multiple
+                </p>
+                <input type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleFileSelect} />
               </label>
             ) : (
-              <div style={{ textAlign: 'center' }}>
-                {selectedFile?.type.startsWith('video/') ? (
-                  <video src={preview} style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 12 }} controls />
-                ) : (
-                  <img src={preview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 12, objectFit: 'contain' }} />
-                )}
-                <button onClick={() => { setSelectedFile(null); setPreview(''); }} style={{ marginTop: '0.5rem', color: 'var(--error)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Remove
-                </button>
+              <div>
+                <div style={s.previewGrid}>
+                  {previews.map((p, i) => (
+                    <div key={i} style={s.previewTile}>
+                      {p.isVideo ? (
+                        <video src={p.url} style={s.previewMedia} muted />
+                      ) : (
+                        <img src={p.url} alt="Preview" style={s.previewMedia} />
+                      )}
+                      {p.isVideo && (
+                        <span style={s.previewBadge}>
+                          <i className="fa-solid fa-video"></i>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.7rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                    {files.length === 1 ? '1 file selected' : `${files.length} files selected`}
+                  </span>
+                  <label style={s.addMoreBtn}>
+                    <i className="fa-solid fa-plus" style={{ marginRight: '0.3rem' }}></i>Choose different files
+                    <input type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={handleFileSelect} disabled={uploading} />
+                  </label>
+                  <button onClick={resetUploadForm} disabled={uploading} style={s.removeBtn}>
+                    <i className="fa-solid fa-trash" style={{ marginRight: '0.3rem' }}></i>Clear
+                  </button>
+                </div>
               </div>
             )}
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
@@ -354,8 +473,23 @@ const Gallery = () => {
                 ))}
               </select>
             </div>
-            <button onClick={handleUpload} disabled={!selectedFile || uploading} style={{ ...s.uploadBtn, opacity: !selectedFile || uploading ? 0.6 : 1 }}>
-              {uploading ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Uploading...</> : <><i className="fa-solid fa-cloud-arrow-up" style={{ marginRight: '0.3rem' }}></i>Upload</>}
+            {uploading && progress && (
+              <div style={{ marginTop: '0.8rem' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.3rem' }}>
+                  Uploading {Math.min(progress.done + 1, progress.total)} of {progress.total}
+                  {progress.percent > 0 ? ` — ${progress.percent}%` : ''}
+                </div>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${progress.percent}%`, background: 'var(--primary)', transition: 'width 0.2s' }} />
+                </div>
+              </div>
+            )}
+            <button onClick={handleUpload} disabled={!files.length || uploading} style={{ ...s.uploadBtn, opacity: !files.length || uploading ? 0.6 : 1 }}>
+              {uploading
+                ? <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i>Uploading...</>
+                : <><i className="fa-solid fa-cloud-arrow-up" style={{ marginRight: '0.3rem' }}></i>
+                    Upload {files.length > 1 ? `${files.length} items` : 'to Gallery'}
+                  </>}
             </button>
           </div>
         )}
@@ -677,6 +811,58 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 12,
     cursor: 'pointer',
     background: 'var(--bg)',
+  },
+  previewGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+    gap: '0.6rem',
+  },
+  previewTile: {
+    position: 'relative',
+    borderRadius: 10,
+    overflow: 'hidden',
+    border: '1px solid var(--border)',
+    background: 'var(--bg-alt)',
+    aspectRatio: '1 / 1',
+  },
+  previewMedia: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  previewBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    background: 'rgba(0,0,0,0.6)',
+    color: '#fff',
+    borderRadius: 6,
+    padding: '0.15rem 0.35rem',
+    fontSize: '0.65rem',
+  },
+  addMoreBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '0.4rem 0.8rem',
+    borderRadius: 10,
+    border: '1px solid var(--border)',
+    background: 'var(--card-bg, #fff)',
+    color: 'var(--text-light)',
+    fontSize: '0.82rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
+  removeBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '0.4rem 0.8rem',
+    borderRadius: 10,
+    border: 'none',
+    background: 'none',
+    color: 'var(--error, #ef4444)',
+    fontSize: '0.82rem',
+    cursor: 'pointer',
   },
   uploadBtn: {
     width: '100%',
